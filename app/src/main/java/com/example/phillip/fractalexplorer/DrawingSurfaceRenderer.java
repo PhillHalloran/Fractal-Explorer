@@ -6,6 +6,8 @@ import android.opengl.Matrix;
 import android.os.ConditionVariable;
 import android.util.Log;
 
+import java.util.Arrays;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -40,7 +42,7 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
 
         Log.d(TAG, "onSurfaceCreated");
-        TexturedGrid.createProgram();
+        TexturedMandelbrot.createProgram();
         Log.d(TAG, "program created successfully");
 
         DrawingState drawingState = mDrawingState;
@@ -81,11 +83,13 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
         }
 
+        Log.d(TAG, Arrays.toString(mDrawingState.mTexturedMandelbrot.getBounds()));
+
         mDrawingState.mTexturedMandelbrot.allocTexturedMandelbrot();
 
         //sets area of world to capture and place within view
         Matrix.orthoM(mProjectionMatrix, 0,  -0.5f, 0.5f,
-                -.5f, 0.5f,  -1, 1);
+                -0.5f, 0.5f,  -1, 1);
         //scale and centre need not be set as long as they match vertex coords
 
 }

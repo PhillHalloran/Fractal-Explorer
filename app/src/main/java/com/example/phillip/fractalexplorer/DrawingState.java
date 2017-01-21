@@ -29,8 +29,8 @@ public class DrawingState {
 
 
     private static final Gradient mGradient = new Gradient(
-            new ColorProportion(100f,   255f,   0f, 255f, 0f),
-            new ColorProportion(50f,   0f,   150f, 255f, 1f));
+            new ColorProportion(0f,   140f,   0f, 255f, 0f),
+            new ColorProportion(0f,   0f,   150f, 255f, 1f));
 
     public TexturedMandelbrot mTexturedMandelbrot;
 
@@ -38,7 +38,8 @@ public class DrawingState {
 
     DrawingState(){
         mTexturedMandelbrot =
-                new TexturedMandelbrot(MINIMUM_I, MAXIMUM_I, MINIMUM_J, MAXIMUM_J, ESCAPE_LIMIT, mGradient);
+                new TexturedMandelbrot(
+                        MINIMUM_I, MAXIMUM_I, MINIMUM_J, MAXIMUM_J, ESCAPE_LIMIT, mGradient);
     }
 
 

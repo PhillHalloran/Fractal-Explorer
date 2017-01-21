@@ -4,7 +4,6 @@ package com.example.phillip.fractalexplorer;
  * Created by Phillip on 21/01/2017.
  */
 
-import android.graphics.Rect;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
@@ -12,6 +11,7 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 public class TexturedMandelbrot {
     private static final String TAG = FractalExplorerActivity.TAG;
@@ -36,8 +36,8 @@ public class TexturedMandelbrot {
 
                     "void main() {" +
                     "  vec2 z, c;" +
-                    "  c.x = (u_bounds.y - u_bounds.x) * u_texCoord.x + u_bounds.x;" +
-                    "  c.y = (u_maxJ - u_minJ) * u_texCoord.y + u_minJ;"+
+                    "  c.x = (u_bounds.y - u_bounds.x) * v_texCoord.x + u_bounds.x;" +
+                    "  c.y = (u_bounds.w - u_bounds.z) * v_texCoord.y + u_bounds.z;"+
                     "  int i;" +
                     "  z = c;" +
                     "  for(i=0; i<iter; i++) {" +
@@ -49,8 +49,8 @@ public class TexturedMandelbrot {
                     "  }" +
 
                     "vec2 texCoord;"+
-                    "texCoord.x = (i == iter ? 1.0 : float(i)) / iter);"+
-                    "texCoord.y = 0;"+
+                    "texCoord.x = (i == iter ? 1.0 : float(i) / float(iter));"+
+                    "texCoord.y = 0.0;"+
 
                     "  gl_FragColor = texture2D(u_texture, texCoord);" +
                     "}";
@@ -140,12 +140,21 @@ public class TexturedMandelbrot {
         mModelView = new float[16];
         Matrix.setIdentityM(mModelView, 0);
 
+        ByteBuffer bb = ByteBuffer.allocateDirect(VERTEX_COUNT * TEX_VERTEX_STRIDE);
+        bb.order(ByteOrder.nativeOrder());
+        FloatBuffer fb = bb.asFloatBuffer();
+        fb.put(sTexArray);
+        sTexArray.position(0);
+        fb.position(0);
+        mTexBuffer = fb;
+
         sBounds[0] = minI;
         sBounds[1] = maxI;
         sBounds[2] = minJ;
         sBounds[3] = maxJ;
 
         mEscapeLimit = escapeLimit;
+        mTextureWidth = escapeLimit;
     }
 
     public void setBounds(float minI, float maxI, float minJ, float maxJ){
@@ -210,6 +219,7 @@ public class TexturedMandelbrot {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(buffer.length);
 
         for(int i = 0; i < gradientArray.length; i++) {
+
             buffer[i] = (byte) gradientArray[i];
         }
 
@@ -217,6 +227,7 @@ public class TexturedMandelbrot {
 
         return byteBuffer;
     }
+
 
     /**
      * Creates the GL program and associated references.
@@ -232,6 +243,7 @@ public class TexturedMandelbrot {
 
         // Get handle to vertex shader's a_texCoord member.
         sTexCoordHandle = GLES20.glGetAttribLocation(sProgramHandle, "a_texCoord");
+        Log.d(TAG, "texCoordHandle" + sTexCoordHandle);
         Util.checkGlError("glGetAttribLocation");
 
         // Get handle to transformation matrix.
