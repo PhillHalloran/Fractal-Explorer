@@ -61,19 +61,32 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         *
         */
 
+
+        //area of world gets selected, shrunk to 1,1 then blown up to viewport size
         Log.d(TAG, "onSurfaceChanged");
-
-        mDrawingState.mTexturedGrid.setWidth(width);
-        mDrawingState.mTexturedGrid.setHeight(height);
-
-        Log.d(TAG, Integer.toString(android.os.Process.myTid()));
-
-        mDrawingState.mTexturedGrid.allocTexturedGrid();
 
         GLES20.glViewport(0, 0, width, height);
 
-        Matrix.orthoM(mProjectionMatrix, 0,  0, width,
-                0, height,  -1, 1);
+        float boundaryRatio = mDrawingState.mTexturedMandelbrot.getHeight() /
+                mDrawingState.mTexturedMandelbrot.getWidth();
+
+        float viewRatio = (float) height / (float) width;
+
+        if (viewRatio > boundaryRatio) {
+            // extend boundary height
+            mDrawingState.mTexturedMandelbrot.scaleHeight(viewRatio/boundaryRatio);
+        } else {
+            // extend boundary width
+            mDrawingState.mTexturedMandelbrot.scaleWidth(boundaryRatio/viewRatio);
+
+        }
+
+        mDrawingState.mTexturedMandelbrot.allocTexturedMandelbrot();
+
+        //sets area of world to capture and place within view
+        Matrix.orthoM(mProjectionMatrix, 0,  -0.5f, 0.5f,
+                -.5f, 0.5f,  -1, 1);
+        //scale and centre need not be set as long as they match vertex coords
 
 }
 
@@ -84,9 +97,10 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        TexturedGrid.prepareToDraw();
-        drawingState.drawTexturedGrid();
-        TexturedGrid.finishedDrawing();
+        mDrawingState.mTexturedMandelbrot.prepareToDraw();
+        mDrawingState.drawTexturedMandelbrot();
+        mDrawingState.mTexturedMandelbrot.finishedDrawing();
+
     }
 
     /**

@@ -1,5 +1,9 @@
 package com.example.phillip.fractalexplorer;
 
+/**
+ * Created by Phillip on 21/01/2017.
+ */
+
 import android.graphics.Rect;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
@@ -8,17 +12,8 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 
-/**
- * Created by Phillip on 4/01/2017.
- *
- * Drawing call and shader code go here. Gets passed an escape value grid and a style (gradient).
- */
-
-
-
-public class TexturedGrid extends Grid {
+public class TexturedMandelbrot {
     private static final String TAG = FractalExplorerActivity.TAG;
 
     static final String VERTEX_SHADER_CODE =
@@ -33,13 +28,33 @@ public class TexturedGrid extends Grid {
                     "}";
 
     static final String FRAGMENT_SHADER_CODE =
-            "precision mediump float;" +        // medium is fine for texture maps
-                    "uniform sampler2D u_texture;" +    // texture data
-                    "varying vec2 v_texCoord;" +        // linearly interpolated texture coordinate
+            "precision mediump float;" +
+                    "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
+                    "varying vec2 v_texCoord;" +     // tex coord passed from vertex shader
+                    "uniform vec4  u_bounds;" +
+                    "uniform int iter;" +            // escape limit
 
                     "void main() {" +
-                    "  gl_FragColor = texture2D(u_texture, v_texCoord);" +
+                    "  vec2 z, c;" +
+                    "  c.x = (u_bounds.y - u_bounds.x) * u_texCoord.x + u_bounds.x;" +
+                    "  c.y = (u_maxJ - u_minJ) * u_texCoord.y + u_minJ;"+
+                    "  int i;" +
+                    "  z = c;" +
+                    "  for(i=0; i<iter; i++) {" +
+                    "    float x = (z.x * z.x - z.y * z.y) + c.x;" +
+                    "    float y = (z.y * z.x + z.x * z.y) + c.y;" +
+                    "    if((x * x + y * y) > 4.0) break;" +
+                    "    z.x = x;" +
+                    "    z.y = y;" +
+                    "  }" +
+
+                    "vec2 texCoord;"+
+                    "texCoord.x = (i == iter ? 1.0 : float(i)) / iter);"+
+                    "texCoord.y = 0;"+
+
+                    "  gl_FragColor = texture2D(u_texture, texCoord);" +
                     "}";
+
 
     /**
      * Model/view matrix for this object.  Updated by setPosition() and setScale().  This
@@ -71,22 +86,9 @@ public class TexturedGrid extends Grid {
             1.0f,   0.0f,   // top right
     };
 
-    /**
-     * Square, suitable for GL_LINE_LOOP.  (The standard COORDS will create an hourglass.)
-     * This is expected to have the same number of vertices and coords per vertex as COORDS.
-     */
-    private static final float OUTLINE_COORDS[] = {
-            -0.5f, -0.5f,   // bottom left
-            0.5f, -0.5f,   // bottom right
-            0.5f,  0.5f,   // top right
-            -0.5f,  0.5f,   // top left
-    };
-
     // Common arrays of vertices.
-    private static FloatBuffer sVertexArray = TexturedGrid.createVertexArray(COORDS);
-    private static FloatBuffer sTexArray = TexturedGrid.createVertexArray(TEX_COORDS);
-    private static FloatBuffer sOutlineVertexArray = TexturedGrid.createVertexArray(OUTLINE_COORDS);
-
+    private static FloatBuffer sVertexArray = TexturedMandelbrot.createVertexArray(COORDS);
+    private static FloatBuffer sTexArray = TexturedMandelbrot.createVertexArray(TEX_COORDS);
 
     // References to vertex data.
     private static FloatBuffer sVertexBuffer = sVertexArray;
@@ -96,11 +98,13 @@ public class TexturedGrid extends Grid {
     private static int sTexCoordHandle = -1;
     private static int sPositionHandle = -1;
     private static int sMVPMatrixHandle = -1;
+    private static int sBoundsUniformHandle = -1;
+    private static int sIterUniformHandle = -1;
 
     // Texture data for this instance.
     private int mTextureDataHandle = -1;
     private int mTextureWidth = -1;
-    private int mTextureHeight = -1;
+    private int mTextureHeight = 1;
     private FloatBuffer mTexBuffer;
 
     // Sanity check on draw prep.
@@ -115,6 +119,8 @@ public class TexturedGrid extends Grid {
     public static final int VERTEX_COUNT = COORDS.length / COORDS_PER_VERTEX;
 
     private Gradient mGradient;
+    private int mEscapeLimit;
+    private float[] sBounds = new float[4];
 
     private static float[] sTempMVP = new float[16];
 
@@ -123,26 +129,93 @@ public class TexturedGrid extends Grid {
     //R,G,B,A values each held in 1 byte values 00-ff
     private static final int BYTES_PER_PIXEL = 4;
 
-    //texture generaton and setting called elsewhere because no height/width available yet
-    public TexturedGrid
-    (double minI, double maxI,
-     double minJ, double maxJ,
-     int escapeLimit,
-     Gradient gradient) {
+    //bounds are calculated to match pixel ratio
+    TexturedMandelbrot(float minI, float maxI,
+                       float minJ, float maxJ,
+                       int escapeLimit,
+                       Gradient gradient){
 
-        super(minI, maxI, minJ, maxJ, escapeLimit);
         mGradient = gradient;
 
         mModelView = new float[16];
         Matrix.setIdentityM(mModelView, 0);
 
-        ByteBuffer bb = ByteBuffer.allocateDirect(VERTEX_COUNT * TEX_VERTEX_STRIDE);
-        bb.order(ByteOrder.nativeOrder());
-        FloatBuffer fb = bb.asFloatBuffer();
-        fb.put(sTexArray);
-        sTexArray.position(0);
-        fb.position(0);
-        mTexBuffer = fb;
+        sBounds[0] = minI;
+        sBounds[1] = maxI;
+        sBounds[2] = minJ;
+        sBounds[3] = maxJ;
+
+        mEscapeLimit = escapeLimit;
+    }
+
+    public void setBounds(float minI, float maxI, float minJ, float maxJ){
+        sBounds[0] = minI;
+        sBounds[1] = maxI;
+        sBounds[2] = minJ;
+        sBounds[3] = maxJ;
+    }
+
+    public void setLimit(int limit){
+        mEscapeLimit = limit;
+        mTextureWidth = limit;
+    }
+
+    public float[] getBounds() {
+        return sBounds;
+    }
+
+    public int getLimit() {
+        return mEscapeLimit;
+    }
+
+    public float getHeight() {
+        return sBounds[1] - sBounds[0];
+    }
+
+    public float getWidth() {
+        return sBounds[3] - sBounds[2];
+    }
+
+    public void scaleWidth(float factor) {
+        float deltaWidth = factor * getWidth() - getWidth();
+        setBounds(
+                sBounds[0] - deltaWidth / 2,
+                sBounds[1] + deltaWidth / 2,
+                sBounds[2],
+                sBounds[3]);
+    }
+
+    public void scaleHeight(float factor) {
+        float deltaHeight = factor * getWidth() - getWidth();
+        setBounds(
+                sBounds[0],
+                sBounds[1],
+                sBounds[2] - deltaHeight / 2,
+                sBounds[3] + deltaHeight / 2);
+    }
+
+
+    public void setTexture(ByteBuffer buf, int width, int height, int format) {
+        mTextureDataHandle = Util.createImageTexture(buf, width, height, format);
+        mTextureWidth = width;
+        mTextureHeight = height;
+    }
+
+    private ByteBuffer generateTexture() {
+
+        byte[] buffer = new byte[mTextureWidth * mTextureHeight * BYTES_PER_PIXEL];
+
+        int[] gradientArray = mGradient.makeGradient(mEscapeLimit);
+
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(buffer.length);
+
+        for(int i = 0; i < gradientArray.length; i++) {
+            buffer[i] = (byte) gradientArray[i];
+        }
+
+        byteBuffer.put(buffer).position(0);
+
+        return byteBuffer;
     }
 
     /**
@@ -169,6 +242,12 @@ public class TexturedGrid extends Grid {
         int textureUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_texture");
         Util.checkGlError("glGetUniformLocation");
 
+        int sBoundsUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_bounds");
+        Util.checkGlError("glGetUniformLocation");
+
+        int sIterUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_iter");
+        Util.checkGlError("glGetUniformLocation");
+
         // Set u_texture to reference texture unit 0.  (We don't change the value, so we can just
         // set it here.)
         GLES20.glUseProgram(sProgramHandle);
@@ -176,7 +255,7 @@ public class TexturedGrid extends Grid {
         Util.checkGlError("glUniform1i");
         GLES20.glUseProgram(0);
 
-        Util.checkGlError("TexturedGrid setup complete");
+        Util.checkGlError("TexturedMandelbrot setup complete");
     }
 
 
@@ -193,150 +272,10 @@ public class TexturedGrid extends Grid {
         return fb;
     }
 
-    /**
-     * NOT NEEDED
-     *
-     * Specifies the rectangle within the texture map where the texture data is.  By default,
-     * the entire texture will be used.
-     * <p>
-     * Texture coordinates use the image coordinate system, i.e. (0,0) is in the top left.
-     * Remember that the bottom-right coordinates are exclusive.
-     *
-     * @param coords Coordinates within the texture.
-     */
-    public void setTextureCoords(Rect coords) {
-        // Convert integer rect coordinates to [0.0, 1.0].
-        float left = (float) coords.left / mTextureWidth;
-        float right = (float) coords.right / mTextureWidth;
-        float top = (float) coords.top / mTextureHeight;
-        float bottom = (float) coords.bottom / mTextureHeight;
-
-        FloatBuffer fb = mTexBuffer;
-        fb.put(left);           // bottom left
-        fb.put(bottom);
-        fb.put(right);          // bottom right
-        fb.put(bottom);
-        fb.put(left);           // top left
-        fb.put(top);
-        fb.put(right);          // top right
-        fb.put(top);
-        fb.position(0);
-    }
-
-
-
-    @Override
-    public Grid setWidth(int viewWidth) {
-        super.setWidth(viewWidth);
-        mTextureWidth = viewWidth;
-        return this;
-    }
-
-    @Override
-    public Grid setHeight(int viewHeight) {
-        super.setHeight(viewHeight);
-        mTextureHeight = viewHeight;
-        return this;
-    }
-
-    //can only be called after height and width have been set
-    private ByteBuffer generateTexture() {
-
-        byte[] buffer = new byte[mTextureWidth * mTextureHeight * BYTES_PER_PIXEL];
-
-        //Log.d(TAG, Integer.toString(android.os.Process.myTid()));
-
-        int[] escapeValues = getEscapeValues();
-        int[] gradientArray = mGradient.makeGradient(getEscapeLimit());
-
-//        Log.d(TAG, "EscapeValuesSize: " + Integer.toString(escapeValues.length));
-//        Log.d(TAG, "GradientArraySize: " + Integer.toString(gradientArray.length));
-
-        for(int i = 0; i < escapeValues.length; i++){ //iterates through every pixel
-
-            buffer[i * BYTES_PER_PIXEL]     =
-                    (byte) gradientArray[escapeValues[i] * BYTES_PER_PIXEL];
-
-            buffer[i * BYTES_PER_PIXEL + 1] =
-                    (byte) gradientArray[escapeValues[i] * BYTES_PER_PIXEL + 1];
-
-            buffer[i * BYTES_PER_PIXEL + 2] =
-                    (byte) gradientArray[escapeValues[i] * BYTES_PER_PIXEL + 2];
-
-            buffer[i * BYTES_PER_PIXEL + 3] =
-                    (byte) gradientArray[escapeValues[i] * BYTES_PER_PIXEL + 3];
-        }
-
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(buffer.length);
-
-        byteBuffer.put(buffer).position(0);
-
-        return byteBuffer;
-    }
-
-    public void setTexture(ByteBuffer buf, int width, int height, int format) {
-        mTextureDataHandle = Util.createImageTexture(buf, width, height, format);
-        mTextureWidth = width;
-        mTextureHeight = height;
-    }
-
-    /**
-     * Returns the X position (orld coordinates).
-     */
-    public float getXPosition() {
-        return mModelView[12];
-    }
-
-    /**
-     * Returns the Y position (world coordinates).
-     */
-    public float getYPosition() {
-        return mModelView[13];
-    }
-
-    /**
-     * NOT USED: TEXTURE ALWAYS CENTRED
-     *
-     * Sets the position in the world.
-     */
-    public void setPosition(float x, float y) {
-        // column-major 4x4 matrix
-        mModelView[12] = x;
-        mModelView[13] = y;
-    }
-
-    /**
-     * Gets the scale value in the X dimension.
-     */
-    public float getXScale() {
-        return mModelView[0];
-    }
-
-    /**
-     * Gets the scale value in the Y dimension.
-     */
-    public float getYScale() {
-        return mModelView[5];
-    }
-
-    /**
-     * Sets the size of the rectangle.
-     */
-    public void setScale(float xs, float ys) {
-        // column-major 4x4 matrix
-        mModelView[0] = xs;
-        mModelView[5] = ys;
-    }
-    public void allocTexturedGrid(){
-//        Log.d(TAG, "alloc grid");
-        allocGrid();
-        //Log.d(TAG, "alloc after super");
-        //width and height set in renderer before these calls are made
+    public void allocTexturedMandelbrot(){
         setTexture(generateTexture(), mTextureWidth, mTextureHeight, DATA_FORMAT);
-        setScale(mTextureWidth, mTextureHeight);
-        setPosition(mTextureWidth/2.0f, mTextureHeight/2.0f);
-//        Log.d(TAG, "alloc grid complete");
     }
+
 
     public static void prepareToDraw(){
         // Select our program.
@@ -385,6 +324,8 @@ public class TexturedGrid extends Grid {
                 GLES20.GL_FLOAT, false, TEX_VERTEX_STRIDE, mTexBuffer);
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glVertexAttribPointer");
 
+
+
         // Compute model/view/projection matrix.
         float[] mvp = sTempMVP;     // scratch storage
         Matrix.multiplyMM(mvp, 0, DrawingSurfaceRenderer.mProjectionMatrix, 0, mModelView, 0);
@@ -392,6 +333,10 @@ public class TexturedGrid extends Grid {
         // Copy the model / view / projection matrix over.
         GLES20.glUniformMatrix4fv(sMVPMatrixHandle, 1, false, mvp, 0);
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glUniformMatrix4fv");
+
+        GLES20.glUniform1fv(sBoundsUniformHandle, 1, sBounds, 0);
+
+        GLES20.glUniform1i(sIterUniformHandle, mEscapeLimit);
 
         // Set the active texture unit to unit 0.
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -408,5 +353,5 @@ public class TexturedGrid extends Grid {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glDrawArrays");
     }
-}
 
+}
