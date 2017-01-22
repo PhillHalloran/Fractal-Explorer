@@ -83,7 +83,7 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
         }
 
-        Log.d(TAG, Arrays.toString(mDrawingState.mTexturedMandelbrot.getBounds()));
+//        Log.d(TAG, Arrays.toString(mDrawingState.mTexturedMandelbrot.getBounds()));
 
         mDrawingState.mTexturedMandelbrot.allocTexturedMandelbrot();
 

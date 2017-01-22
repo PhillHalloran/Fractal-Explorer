@@ -13,6 +13,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
+import javax.microedition.khronos.opengles.GL;
+
 public class TexturedMandelbrot {
     private static final String TAG = FractalExplorerActivity.TAG;
 
@@ -32,26 +34,24 @@ public class TexturedMandelbrot {
                     "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
                     "varying vec2 v_texCoord;" +     // tex coord passed from vertex shader
                     "uniform vec4  u_bounds;" +
-                    "uniform int iter;" +            // escape limit
+                    "uniform int u_iter;" +            // escape limit
 
                     "void main() {" +
-                    "  vec2 z, c;" +
-                    "  c.x = (u_bounds.y - u_bounds.x) * v_texCoord.x + u_bounds.x;" +
-                    "  c.y = (u_bounds.w - u_bounds.z) * v_texCoord.y + u_bounds.z;"+
+                    "  vec2 z, c, texCoord;" +
+                    "  c.x = ((u_bounds.y - u_bounds.x) * v_texCoord.x) + u_bounds.x;" +
+                    "  c.y = ((u_bounds.w - u_bounds.z) * v_texCoord.y) + u_bounds.z;"+
                     "  int i;" +
                     "  z = c;" +
-                    "  for(i=0; i<iter; i++) {" +
+                    "  for(i = 0; i < u_iter; i++) {" +
+                    "    if((z.x * z.x + z.y * z.y) > 4.0) break;" +
                     "    float x = (z.x * z.x - z.y * z.y) + c.x;" +
                     "    float y = (z.y * z.x + z.x * z.y) + c.y;" +
-                    "    if((x * x + y * y) > 4.0) break;" +
                     "    z.x = x;" +
                     "    z.y = y;" +
                     "  }" +
 
-                    "vec2 texCoord;"+
-                    "texCoord.x = (i == iter ? 1.0 : float(i) / float(iter));"+
-                    "texCoord.y = 0.0;"+
-
+                    "  texCoord.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
+                    "  texCoord.y = 0.0;"+
                     "  gl_FragColor = texture2D(u_texture, texCoord);" +
                     "}";
 
@@ -120,7 +120,7 @@ public class TexturedMandelbrot {
 
     private Gradient mGradient;
     private int mEscapeLimit;
-    private float[] sBounds = new float[4];
+    private static float[] sBounds = new float[4];
 
     private static float[] sTempMVP = new float[16];
 
@@ -254,10 +254,10 @@ public class TexturedMandelbrot {
         int textureUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_texture");
         Util.checkGlError("glGetUniformLocation");
 
-        int sBoundsUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_bounds");
+        sBoundsUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_bounds");
         Util.checkGlError("glGetUniformLocation");
 
-        int sIterUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_iter");
+        sIterUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_iter");
         Util.checkGlError("glGetUniformLocation");
 
         // Set u_texture to reference texture unit 0.  (We don't change the value, so we can just
@@ -346,7 +346,7 @@ public class TexturedMandelbrot {
         GLES20.glUniformMatrix4fv(sMVPMatrixHandle, 1, false, mvp, 0);
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glUniformMatrix4fv");
 
-        GLES20.glUniform1fv(sBoundsUniformHandle, 1, sBounds, 0);
+        GLES20.glUniform4fv(sBoundsUniformHandle, 1, FloatBuffer.wrap(sBounds));
 
         GLES20.glUniform1i(sIterUniformHandle, mEscapeLimit);
 
