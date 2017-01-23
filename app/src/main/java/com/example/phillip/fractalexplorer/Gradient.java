@@ -44,8 +44,6 @@ public class Gradient {
     private int[] computeLocalGradient
             (ColorProportion colorMin, ColorProportion colorMax, float localSamplePoint) {
 
-
-
         int[] sampleColor = new int[4];
 
         float deltaR = colorMax.mVec[0] - colorMin.mVec[0];
@@ -62,10 +60,6 @@ public class Gradient {
 
     //Returns an array of colours, sampled evenly from the gradient values, including each end.
     public int[] makeGradient(int intervals) {
-
-//        for(int i = 0; i < mGradientValues.size(); i++){
-//            Log.d(TAG, Integer.toString(i) + ": " + Arrays.toString(mGradientValues.get(i).mVec));
-//        }
 
         int[] colorArray = new int[intervals * 4]; //only holds colour values
         ColorProportion c, previousC;
@@ -104,7 +98,13 @@ public class Gradient {
                     gradientValuesIndex++;
                 }
 
+                if (samplePoint > c.mVec[4]) {
+                    gradientValuesIndex++;
+                    c = mGradientValues.get(gradientValuesIndex);
+                }
+
                 if (samplePoint < c.mVec[4]) {
+
                     //calculate values at locally adjusted proportion
                     //take this point and point index - 1
                     int[] sampleColor = new int[4];
@@ -175,5 +175,8 @@ public class Gradient {
         mGradientValues.remove(cOld);
         mGradientValues.add(cNew);
     }
-    
+
+    public ArrayList<ColorProportion> getColours() {
+        return mGradientValues;
+    }
 }

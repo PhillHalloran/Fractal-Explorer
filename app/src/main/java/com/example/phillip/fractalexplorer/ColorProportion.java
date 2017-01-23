@@ -1,5 +1,6 @@
 package com.example.phillip.fractalexplorer;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -32,9 +33,15 @@ public class ColorProportion implements Comparable<ColorProportion> {
             return 0;
         }
     }
+
     @Override
     public boolean equals(Object o){
 
         return true;
+    }
+
+    @Override
+    public String toString(){
+        return Arrays.toString(mVec);
     }
 }
