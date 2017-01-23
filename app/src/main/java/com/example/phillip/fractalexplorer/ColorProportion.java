@@ -35,12 +35,6 @@ public class ColorProportion implements Comparable<ColorProportion> {
     }
 
     @Override
-    public boolean equals(Object o){
-
-        return true;
-    }
-
-    @Override
     public String toString(){
         return Arrays.toString(mVec);
     }
