@@ -5,6 +5,8 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.ConditionVariable;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.support.v4.view.MotionEventCompat;
 
 import java.util.Arrays;
 
@@ -30,6 +32,12 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
     static final float mProjectionMatrix[] = new float[16];
 
+    private float mViewHeight;
+    private float mViewWidth;
+
+    private Long previousTime = -1L;
+
+
     DrawingSurfaceRenderer(DrawingState state,
                                   DrawingSurfaceView surfaceView) {
         mSurfaceView = surfaceView;
@@ -49,6 +57,7 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
         GLES20.glClearColor(0f ,0f ,0f ,1f);
 
+        previousTime = System.currentTimeMillis();
 
 
     }
@@ -67,24 +76,14 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         //area of world gets selected, shrunk to 1,1 then blown up to viewport size
         Log.d(TAG, "onSurfaceChanged");
 
+        mViewHeight = height;
+        mViewWidth = width;
+
         GLES20.glViewport(0, 0, width, height);
-
-        float boundaryRatio = mDrawingState.mTexturedMandelbrot.getHeight() /
-                mDrawingState.mTexturedMandelbrot.getWidth();
-
+        
         float viewRatio = (float) height / (float) width;
-
-        if (viewRatio > boundaryRatio) {
-            // extend boundary height
-            mDrawingState.mTexturedMandelbrot.scaleHeight(viewRatio/boundaryRatio);
-        } else {
-            // extend boundary width
-            mDrawingState.mTexturedMandelbrot.scaleWidth(boundaryRatio/viewRatio);
-
-        }
-
-//        Log.d(TAG, Arrays.toString(mDrawingState.mTexturedMandelbrot.getBounds()));
-
+        mDrawingState.mTexturedMandelbrot.setRatio(viewRatio);
+        
         mDrawingState.mTexturedMandelbrot.allocTexturedMandelbrot();
 
         //sets area of world to capture and place within view
@@ -92,11 +91,15 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
                 -0.5f, 0.5f,  -1, 1);
         //scale and centre need not be set as long as they match vertex coords
 
+
+
 }
 
     @Override
     public void onDrawFrame(GL10 unused) {
 
+        Long currentTime = System.currentTimeMillis();
+        previousTime = currentTime;
         DrawingState drawingState = mDrawingState;
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);

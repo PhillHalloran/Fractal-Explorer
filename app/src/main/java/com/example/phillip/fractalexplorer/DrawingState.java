@@ -20,8 +20,9 @@ package com.example.phillip.fractalexplorer;
 public class DrawingState {
     private static final String TAG = FractalExplorerActivity.TAG;
 
-    private static final int ESCAPE_LIMIT = 100;
+    private static final int ESCAPE_LIMIT = 150;
 
+    // TODO: 6/02/2017 remove unused stuff below
     private float MINIMUM_I = -2f;
     private float MAXIMUM_I = 2f;
     private float MINIMUM_J = -2f;
@@ -29,15 +30,16 @@ public class DrawingState {
 
 
     private static final Gradient mGradient = new Gradient(
-            new ColorProportion(10f,   150f, 20f, 255f, 0f),
-            new ColorProportion(20f,   10f, 150f, 255f, 1f));
+            new ColorProportion(0f,   0f, 0f, 255f, 0f),
+            new ColorProportion(0f,   0f, 0f, 255f, 1f));
 
 
     public TexturedMandelbrot mTexturedMandelbrot;
 
 
     DrawingState(){
-        mGradient.add(new ColorProportion(255f, 255f, 255f, 255f, 0.2f));
+        mGradient.add(new ColorProportion(150f, 40f, 40f, 255f, 0.15f));
+        mGradient.add(new ColorProportion(0f, 0f, 0f, 255f, 0.05f));
 
         mTexturedMandelbrot =
                 new TexturedMandelbrot(

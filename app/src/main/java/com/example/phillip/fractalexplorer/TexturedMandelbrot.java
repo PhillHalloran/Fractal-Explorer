@@ -33,13 +33,16 @@ public class TexturedMandelbrot {
             "precision mediump float;" +
                     "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
                     "varying vec2 v_texCoord;" +     // tex coord passed from vertex shader
-                    "uniform vec4  u_bounds;" +
+                    "uniform vec2 u_cp;" +
+                    "uniform vec2 u_vecA;"+
+                    "uniform vec2 u_vecB;"+
                     "uniform int u_iter;" +            // escape limit
 
                     "void main() {" +
                     "  vec2 z, c, texCoord;" +
-                    "  c.x = ((u_bounds.y - u_bounds.x) * v_texCoord.x) + u_bounds.x;" +
-                    "  c.y = ((u_bounds.w - u_bounds.z) * v_texCoord.y) + u_bounds.z;"+
+
+                    "c = u_cp - u_vecA - u_vecB + vec2(2.0) * (v_texCoord.x * u_vecA + v_texCoord.y * u_vecB);"+
+
                     "  int i;" +
                     "  z = c;" +
                     "  for(i = 0; i < u_iter; i++) {" +
@@ -98,8 +101,10 @@ public class TexturedMandelbrot {
     private static int sTexCoordHandle = -1;
     private static int sPositionHandle = -1;
     private static int sMVPMatrixHandle = -1;
-    private static int sBoundsUniformHandle = -1;
     private static int sIterUniformHandle = -1;
+    private static int sVecAUniformHandle = -1;
+    private static int sVecBUniformHandle = -1;
+    private static int sCentrePointHandle = -1;
 
     // Texture data for this instance.
     private int mTextureDataHandle = -1;
@@ -120,7 +125,11 @@ public class TexturedMandelbrot {
 
     private Gradient mGradient;
     private int mEscapeLimit;
-    private static float[] sBounds = new float[4];
+
+    private static float[] sVecA = new float[2];
+    private static float[] sVecB = new float[2];
+    private static float[] sCentrePoint = new float[2];
+
 
     private static float[] sTempMVP = new float[16];
 
@@ -148,63 +157,106 @@ public class TexturedMandelbrot {
         fb.position(0);
         mTexBuffer = fb;
 
-        sBounds[0] = minI;
-        sBounds[1] = maxI;
-        sBounds[2] = minJ;
-        sBounds[3] = maxJ;
+        sVecA[0] = 2f;
+        sVecA[1] = 0f;
+        sVecB[0] = 0f;
+        sVecB[1] = 2f;
+        sCentrePoint[0] = 0f;
+        sCentrePoint[1] = 0f;
 
         mEscapeLimit = escapeLimit;
         mTextureWidth = escapeLimit;
     }
 
-    public void setBounds(float minI, float maxI, float minJ, float maxJ){
-        sBounds[0] = minI;
-        sBounds[1] = maxI;
-        sBounds[2] = minJ;
-        sBounds[3] = maxJ;
-    }
+    // TODO: 5/02/2017 parameter setter methods -cp -veca -vecb
 
     public void setLimit(int limit){
         mEscapeLimit = limit;
         mTextureWidth = limit;
     }
 
-    public float[] getBounds() {
-        return sBounds;
-    }
+    // TODO: 5/02/2017 get bounding parameters
 
     public int getLimit() {
         return mEscapeLimit;
     }
 
-    public float getHeight() {
-        return sBounds[1] - sBounds[0];
+    public void setRatio(float viewRatio) {
+        float magA, magB, vectorRatio;
+
+        magA = (float) Math.sqrt(sVecA[0] * sVecA[0] + sVecA[1] * sVecA[1]);
+        magB = (float) Math.sqrt(sVecB[0] * sVecB[0] + sVecB[1] * sVecB[1]);
+
+        vectorRatio = magB / magA;
+
+        if(vectorRatio >= 1f) {
+            if(viewRatio >= 1f) {
+                setHeight(magB * viewRatio/vectorRatio);
+            } else {
+                setHeight(magA);
+                setWidth(magA / viewRatio);
+            }
+        } else {
+            if(viewRatio >= 1f) {
+                setWidth(magB);
+                setHeight(magB * viewRatio);
+            } else {
+                setWidth(magA * viewRatio/vectorRatio);
+
+            }
+
+        }
+
     }
 
-    public float getWidth() {
-        return sBounds[3] - sBounds[2];
+    private float [] setVectorLength(float[] v, float l) {
+
+        float [] result = new float[2];
+
+        if(l == 0f) {
+            return result;
+        }
+
+        float m = (float) Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+        float scale = l / m;
+
+        result[0] = v[0] * scale;
+        result[1] = v[1] * scale;
+
+        return result;
     }
 
-    public void scaleWidth(float factor) {
-        float deltaWidth = factor * getWidth() - getWidth();
-        setBounds(
-                sBounds[0] - deltaWidth / 2,
-                sBounds[1] + deltaWidth / 2,
-                sBounds[2],
-                sBounds[3]);
+    public void setWidth(float w){
+        sVecA = setVectorLength(sVecA, w);
     }
 
-    public void scaleHeight(float factor) {
-        float deltaHeight = factor * getWidth() - getWidth();
-        setBounds(
-                sBounds[0],
-                sBounds[1],
-                sBounds[2] - deltaHeight / 2,
-                sBounds[3] + deltaHeight / 2);
+    public void setHeight(float h){
+        sVecB = setVectorLength(sVecB, h);
     }
 
+    public void move(float [] offset) {
+        sCentrePoint[0] += offset[0];
+        sCentrePoint[1] += offset[1];
+    }
 
-    public void setTexture(ByteBuffer buf, int width, int height, int format) {
+    public void rotate(float r) {
+        float x, y;
+
+        x = sVecA[0];
+        y = sVecA[1];
+
+        sVecA[0] = x * (float)Math.cos(r) - y * (float)Math.sin(r);
+        sVecA[1] = x * (float)Math.sin(r) + y * (float)Math.cos(r);
+
+        x = sVecB[0];
+        y = sVecB[1];
+
+        sVecB[0] = x * (float)Math.cos(r) - y * (float)Math.sin(r);
+        sVecB[1] = x * (float)Math.sin(r) + y * (float)Math.cos(r);
+
+    }
+
+        public void setTexture(ByteBuffer buf, int width, int height, int format) {
         mTextureDataHandle = Util.createImageTexture(buf, width, height, format);
         mTextureWidth = width;
         mTextureHeight = height;
@@ -254,7 +306,13 @@ public class TexturedMandelbrot {
         int textureUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_texture");
         Util.checkGlError("glGetUniformLocation");
 
-        sBoundsUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_bounds");
+        sVecAUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_vecA");
+        Util.checkGlError("glGetUniformLocation");
+
+        sVecBUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_vecB");
+        Util.checkGlError("glGetUniformLocation");
+
+        sCentrePointHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_cp");
         Util.checkGlError("glGetUniformLocation");
 
         sIterUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_iter");
@@ -346,7 +404,11 @@ public class TexturedMandelbrot {
         GLES20.glUniformMatrix4fv(sMVPMatrixHandle, 1, false, mvp, 0);
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glUniformMatrix4fv");
 
-        GLES20.glUniform4fv(sBoundsUniformHandle, 1, FloatBuffer.wrap(sBounds));
+        GLES20.glUniform2fv(sVecAUniformHandle, 1, FloatBuffer.wrap(sVecA));
+
+        GLES20.glUniform2fv(sVecBUniformHandle, 1, FloatBuffer.wrap(sVecB));
+
+        GLES20.glUniform2fv(sCentrePointHandle, 1, FloatBuffer.wrap(sCentrePoint));
 
         GLES20.glUniform1i(sIterUniformHandle, mEscapeLimit);
 

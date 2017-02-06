@@ -25,9 +25,8 @@ public class DrawingSurfaceView extends GLSurfaceView{
 
         mRenderer = new DrawingSurfaceRenderer(drawingState, this);
 
-
-
         setRenderer(mRenderer);
+        //setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     @Override
