@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.os.ConditionVariable;
 import android.util.Log;
+import android.view.MotionEvent;
 
 /**
  * Created by Phillip on 28/12/2016.
@@ -51,5 +52,22 @@ public class DrawingSurfaceView extends GLSurfaceView{
         syncObj.block();
 
         Log.d(TAG, "renderer pause complete");
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent e) {
+        final int pointerCount = e.getPointerCount();
+
+        //mRenderer.onTouchEvent(e);
+
+        final MotionEvent ev = e; //is this the right way to do this?
+
+        queueEvent(new Runnable() {
+            @Override public void run() {
+                mRenderer.touchEvent(ev);
+            }});
+
+        return true;
+
     }
 }

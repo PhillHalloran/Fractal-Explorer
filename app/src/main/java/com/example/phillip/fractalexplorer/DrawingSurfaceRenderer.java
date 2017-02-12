@@ -35,15 +35,10 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     private float mViewHeight;
     private float mViewWidth;
 
-    private Long previousTime = -1L;
-
-
     DrawingSurfaceRenderer(DrawingState state,
                                   DrawingSurfaceView surfaceView) {
         mSurfaceView = surfaceView;
         mDrawingState = state;
-
-
     }
 
     @Override
@@ -56,10 +51,6 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         DrawingState drawingState = mDrawingState;
 
         GLES20.glClearColor(0f ,0f ,0f ,1f);
-
-        previousTime = System.currentTimeMillis();
-
-
     }
 
     @Override
@@ -89,17 +80,14 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         //sets area of world to capture and place within view
         Matrix.orthoM(mProjectionMatrix, 0,  -0.5f, 0.5f,
                 -0.5f, 0.5f,  -1, 1);
-        //scale and centre need not be set as long as they match vertex coords
+        //scale and centre match vertex coords
 
-
-
+        Log.d(TAG, width + ", " + height);//1440, 2422
 }
 
     @Override
     public void onDrawFrame(GL10 unused) {
 
-        Long currentTime = System.currentTimeMillis();
-        previousTime = currentTime;
         DrawingState drawingState = mDrawingState;
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -126,4 +114,12 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
         syncObj.open();
     }
+
+    public void touchEvent(MotionEvent e) {
+
+        //touch even can be anywhere on screen but must be scaled to view w and height
+
+    }
+
+
 }

@@ -181,6 +181,8 @@ public class TexturedMandelbrot {
         return mEscapeLimit;
     }
 
+
+    //changes the vector lengths to a desired ratio, ensuring
     public void setRatio(float viewRatio) {
         float magA, magB, vectorRatio;
 
