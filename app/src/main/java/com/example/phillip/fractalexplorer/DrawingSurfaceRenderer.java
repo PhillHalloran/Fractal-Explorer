@@ -99,25 +99,19 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     }
 
     /**
-     * Handles pausing of the game Activity.  This is called by the View (via queueEvent) at
-     * pause time.  It tells GameState to save its state.
+     * Handles pausing of the drawing Activity.  This is called by the View (via queueEvent) at
+     * pause time.  It tells DrawingState to save its state.
      *
      * @param syncObj Object to notify when we have finished saving state.
      */
     public void onViewPause(ConditionVariable syncObj) {
-        /*
-         * We don't explicitly pause the game action, because the main game loop is being driven
-         * by the framework's calls to our onDrawFrame() callback.  If we were driving the updates
-         * ourselves we'd need to do something more.
-         */
-
 
         syncObj.open();
     }
 
     public void touchEvent(MotionEvent e) {
 
-        //touch even can be anywhere on screen but must be scaled to view w and height
+        //touch even can be anywhere on screen but must be scaled to view width and height
 
     }
 
