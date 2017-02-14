@@ -170,24 +170,35 @@ public class TexturedMandelbrot {
 
     // TODO: 5/02/2017 parameter setter methods -cp -veca -vecb
 
-    public void setLimit(int limit){
-        mEscapeLimit = limit;
-        mTextureWidth = limit;
-    }
-
     // TODO: 5/02/2017 get bounding parameters
 
     public int getLimit() {
         return mEscapeLimit;
     }
 
+    private float getMagnitude(float [] vector) {
+        return (float) Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
+    }
+
+    public float getWidth() {
+        return getMagnitude(sVecA);
+    }
+
+    public float getheight() {
+        return getMagnitude(sVecB);
+    }
+
+    public void setLimit(int limit){
+        mEscapeLimit = limit;
+        mTextureWidth = limit;
+    }
 
     //changes the vector lengths to a desired ratio, ensuring
     public void setRatio(float viewRatio) {
         float magA, magB, vectorRatio;
 
-        magA = (float) Math.sqrt(sVecA[0] * sVecA[0] + sVecA[1] * sVecA[1]);
-        magB = (float) Math.sqrt(sVecB[0] * sVecB[0] + sVecB[1] * sVecB[1]);
+        magA = getMagnitude(sVecA);
+        magB = getMagnitude(sVecB);
 
         vectorRatio = magB / magA;
 
@@ -227,6 +238,7 @@ public class TexturedMandelbrot {
 
         return result;
     }
+
 
     public void setWidth(float w){
         sVecA = setVectorLength(sVecA, w);
