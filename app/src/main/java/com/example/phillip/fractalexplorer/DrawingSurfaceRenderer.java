@@ -111,9 +111,15 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
     public void touchEvent(MotionEvent e) {
 
-        //touch even can be anywhere on screen but must be scaled to view width and height
+        //only centrepoint movement scaled
+
+        //deal with number of touchIDs
+        //change relevant parameters
+
 
     }
+
+
 
 
 }
