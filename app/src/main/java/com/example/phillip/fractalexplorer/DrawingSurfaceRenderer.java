@@ -81,8 +81,6 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         Matrix.orthoM(mProjectionMatrix, 0,  -0.5f, 0.5f,
                 -0.5f, 0.5f,  -1, 1);
         //scale and centre match vertex coords
-
-        Log.d(TAG, width + ", " + height);//1440, 2422
 }
 
     @Override
@@ -109,14 +107,69 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         syncObj.open();
     }
 
+
+    float previousX1 = -1f;
+    float previousY1 = -1f;
+    float previousX2 = -1f;
+    float previousY2 = -1f;
+
+
     public void touchEvent(MotionEvent e) {
 
-        //only centrepoint movement scaled
+        final int pointerCount = e.getPointerCount();
 
-        //deal with number of touchIDs
-        //change relevant parameters
+        if (pointerCount == 1) {
+
+        }
+
+        int indexModified = e.getActionIndex();
+        int Id = e.getPointerId(indexModified);
+
+        switch(e.getActionMasked()) {
+
+            case MotionEvent.ACTION_DOWN:
+                previousX1 = e.getX();
+                previousY1 = e.getY();
+                //Log.d(TAG, "set");
+                break;
+
+            case MotionEvent.ACTION_UP:
+                break;
 
 
+            case MotionEvent.ACTION_POINTER_DOWN:
+                if(Id == 1) {
+                    previousX2 = e.getX(Id);
+                    previousY2 = e.getY(Id);
+                }
+
+                break;
+
+            case MotionEvent.ACTION_POINTER_UP:
+                if(Id == 1) {
+
+                }
+
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                if(pointerCount == 1){
+
+                    float xProp = (e.getX() - previousX1) / 1440;
+                    float yProp = (e.getY() - previousY1) / 2422;
+
+                    mDrawingState.mTexturedMandelbrot.move(new float[] {xProp, yProp});
+                    previousX1 = e.getX();
+                    previousY1 = e.getY();
+                }
+
+                break;
+
+            default:
+                break;
+        }
+
+        mSurfaceView.requestRender();
     }
 
 

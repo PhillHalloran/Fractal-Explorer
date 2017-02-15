@@ -239,6 +239,19 @@ public class TexturedMandelbrot {
         return result;
     }
 
+    private float [] scaleVector(float [] v, float scale){
+        float [] result = new float[2];
+
+        if(scale == 0f){
+            return result;
+        }
+
+        result[0] = v[0] * scale;
+        result[1] = v[1] * scale;
+
+        return result;
+    }
+
 
     public void setWidth(float w){
         sVecA = setVectorLength(sVecA, w);
@@ -248,9 +261,13 @@ public class TexturedMandelbrot {
         sVecB = setVectorLength(sVecB, h);
     }
 
-    public void move(float [] offset) {
-        sCentrePoint[0] += offset[0];
-        sCentrePoint[1] += offset[1];
+    public void move(float [] normalizedOffset) {
+
+        float [] xVector = scaleVector(sVecA,  2f * normalizedOffset[0]);
+        float [] yVector = scaleVector(sVecB,  2f * normalizedOffset[1]);
+
+        sCentrePoint[0] -= xVector[0] + yVector[0];
+        sCentrePoint[1] -= xVector[1] + yVector[1];
     }
 
     public void rotate(float r) {

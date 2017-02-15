@@ -27,7 +27,7 @@ public class DrawingSurfaceView extends GLSurfaceView{
         mRenderer = new DrawingSurfaceRenderer(drawingState, this);
 
         setRenderer(mRenderer);
-        //setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     @Override
@@ -57,8 +57,6 @@ public class DrawingSurfaceView extends GLSurfaceView{
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         final int pointerCount = e.getPointerCount();
-
-        //mRenderer.onTouchEvent(e);
 
         final MotionEvent ev = e; //is this the right way to do this?
 
