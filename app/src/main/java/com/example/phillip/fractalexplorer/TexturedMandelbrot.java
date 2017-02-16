@@ -261,6 +261,14 @@ public class TexturedMandelbrot {
         sVecB = setVectorLength(sVecB, h);
     }
 
+    public void scaleWidth(float proportion) {
+        sVecA = scaleVector(sVecA, proportion);
+    }
+
+    public void scaleHeight(float proportion) {
+        sVecB = scaleVector(sVecB, proportion);
+    }
+
     public void move(float [] normalizedOffset) {
 
         float [] xVector = scaleVector(sVecA,  2f * normalizedOffset[0]);

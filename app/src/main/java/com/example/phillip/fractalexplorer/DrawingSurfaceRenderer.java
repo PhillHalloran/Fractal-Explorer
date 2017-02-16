@@ -197,16 +197,34 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
                     xProp = (currentMidpoint[0] - previousMidpoint[0]) / mViewWidth;
                     yProp = (currentMidpoint[1] - previousMidpoint[1]) / mViewHeight;
 
+                    float a = calcMagnitude(new float[] {previousX2 - previousX1, previousY2 - previousY1}) /
+                            calcMagnitude(new float[] {e.getX(1) - e.getX(0), e.getY(1) - e.getY(0)});
+
+                    Log.d(TAG, " " + a);
+
+                    float [] c = new float[] {
+                            previousMidpoint[0] - (mViewWidth / 2f),
+                            previousMidpoint[1] - (mViewHeight / 2f)};
+
+                    c = scaleVector(c, a);
+
+                    xProp = xProp + c[0];
+                    yProp = yProp + c[1];
+
                     mDrawingState.mTexturedMandelbrot.move(new float[] {xProp, yProp});
+
+                    mDrawingState.mTexturedMandelbrot.scaleWidth(a);
+                    mDrawingState.mTexturedMandelbrot.scaleHeight(a);
 
                     previousX1 = e.getX(0);
                     previousY1 = e.getY(0);
                     previousX2 = e.getX(1);
                     previousY2 = e.getY(1);
 
-
-
                 }
+
+
+
 
                 break;
 
@@ -230,10 +248,26 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     }
 
     private float calcAngle(float x0, float y0, float x1, float y1) {
-        final int NOT_FINAL = 0;
+        final float NOT_READY = 0f;
 
 
-        return NOT_FINAL;
+        return NOT_READY;
     }
 
+    private float calcMagnitude(float [] vector) {
+        return (float) Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
+    }
+
+    private float [] scaleVector(float [] v, float scale){
+        float [] result = new float[2];
+
+        if(scale == 0f){
+            return result;
+        }
+
+        result[0] = v[0] * scale;
+        result[1] = v[1] * scale;
+
+        return result;
+    }
 }
