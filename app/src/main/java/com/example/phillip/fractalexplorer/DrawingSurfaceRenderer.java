@@ -113,6 +113,14 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     float previousX2 = -1f;
     float previousY2 = -1f;
 
+    float xProp;
+    float yProp;
+
+    float [] previousMidpoint;
+    float [] currentMidpoint;
+
+    float previousAngle;
+
 
     public void touchEvent(MotionEvent e) {
 
@@ -130,7 +138,6 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
             case MotionEvent.ACTION_DOWN:
                 previousX1 = e.getX();
                 previousY1 = e.getY();
-                //Log.d(TAG, "set");
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -142,25 +149,63 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
                     previousX2 = e.getX(Id);
                     previousY2 = e.getY(Id);
                 }
-
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
                 if(Id == 1) {
-
                 }
-
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 if(pointerCount == 1){
 
-                    float xProp = (e.getX() - previousX1) / 1440;
-                    float yProp = (e.getY() - previousY1) / 2422;
+                    if(Id == 0) {
+
+                        //following code must be reused with two and more action points
+
+                        xProp = (e.getX() - previousX1) / mViewWidth;
+                        yProp = (e.getY() - previousY1) / mViewHeight;
+
+                        mDrawingState.mTexturedMandelbrot.move(new float[]{xProp, yProp});
+                        previousX1 = e.getX();
+                        previousY1 = e.getY();
+                    }
+
+                    if(Id == 1) {
+
+                        xProp = (e.getX() - previousX2) / mViewWidth;
+                        yProp = (e.getY() - previousY2) / mViewHeight;
+
+                        mDrawingState.mTexturedMandelbrot.move(new float[]{xProp, yProp});
+                        previousX2 = e.getX();
+                        previousY2 = e.getY();
+                    }
+                }
+
+
+                if(pointerCount > 1) {
+
+                    previousMidpoint = calcMidpoint(
+                            previousX1, previousY1,
+                            previousX2, previousY2);
+
+                    currentMidpoint = calcMidpoint(
+                            e.getX(0), e.getY(0),
+                            e.getX(1), e.getY(1)
+                    );
+
+                    xProp = (currentMidpoint[0] - previousMidpoint[0]) / mViewWidth;
+                    yProp = (currentMidpoint[1] - previousMidpoint[1]) / mViewHeight;
 
                     mDrawingState.mTexturedMandelbrot.move(new float[] {xProp, yProp});
-                    previousX1 = e.getX();
-                    previousY1 = e.getY();
+
+                    previousX1 = e.getX(0);
+                    previousY1 = e.getY(0);
+                    previousX2 = e.getX(1);
+                    previousY2 = e.getY(1);
+
+
+
                 }
 
                 break;
@@ -172,7 +217,23 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         mSurfaceView.requestRender();
     }
 
+    private float[] calcMidpoint(float x0, float y0, float x1, float y1){
+        float [] result = new float[] {x1 - x0, y1 - y0};
+
+        result[0] *= 0.5f;
+        result[1] *= 0.5f;
+
+        result[0] += x0;
+        result[1] += y0;
+
+        return result;
+    }
+
+    private float calcAngle(float x0, float y0, float x1, float y1) {
+        final int NOT_FINAL = 0;
 
 
+        return NOT_FINAL;
+    }
 
 }
