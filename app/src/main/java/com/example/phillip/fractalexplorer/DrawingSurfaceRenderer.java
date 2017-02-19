@@ -113,6 +113,11 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     float previousX2 = -1f;
     float previousY2 = -1f;
 
+    float tempX1 = -1f;
+    float tempY1 = -1f;
+    float tempX2 = -1f;
+    float tempY2 = -1f;
+
     float xProp;
     float yProp;
 
@@ -124,35 +129,71 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
     public void touchEvent(MotionEvent e) {
 
-        final int pointerCount = e.getPointerCount();
-
-        if (pointerCount == 1) {
-
-        }
-
+        int pointerCount = e.getPointerCount();
         int indexModified = e.getActionIndex();
         int Id = e.getPointerId(indexModified);
+
+        switch (Id){
+            case 0:
+                tempX1 = e.getX(indexModified);
+                tempY1 = e.getY(indexModified);
+                break;
+
+            case 1:
+                tempX2 = e.getX(indexModified);
+                tempY2 = e.getY(indexModified);
+                break;
+
+            default:
+                break;
+        }
+
+
+
 
         switch(e.getActionMasked()) {
 
             case MotionEvent.ACTION_DOWN:
-                previousX1 = e.getX();
-                previousY1 = e.getY();
+                previousX1 = tempX1;
+                previousY1 = tempY1;
+
+                Log.d(TAG, "0 down");
                 break;
 
             case MotionEvent.ACTION_UP:
+
+                previousX1 = -1;
+                previousY1 = -1;
+
                 break;
 
 
             case MotionEvent.ACTION_POINTER_DOWN:
                 if(Id == 1) {
-                    previousX2 = e.getX(Id);
-                    previousY2 = e.getY(Id);
+                    previousX2 = tempX2;
+                    previousY2 = tempY2;
+
+                    Log.d(TAG, "1 down");
+                }
+                if(Id == 0) {
+                    previousX1 = tempX1;
+                    previousY1 = tempY1;
+
+                    Log.d(TAG, "0 down");
                 }
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
                 if(Id == 1) {
+                    previousX2 = -1;
+                    previousY2 = -1;
+                    Log.d(TAG, "1 up");
+                }
+
+                if(Id == 0) {
+                    previousX1 = -1;
+                    previousY1 = -1;
+                    Log.d(TAG, "0 up");
                 }
                 break;
 
@@ -163,63 +204,80 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
 
                         //following code must be reused with two and more action points
 
-                        xProp = (e.getX() - previousX1) / mViewWidth;
-                        yProp = (e.getY() - previousY1) / mViewHeight;
+                        xProp = (tempX1 - previousX1) / mViewWidth;
+                        yProp = (tempY1 - previousY1) / mViewHeight;
 
                         mDrawingState.mTexturedMandelbrot.move(new float[]{xProp, yProp});
-                        previousX1 = e.getX();
-                        previousY1 = e.getY();
+                        previousX1 = tempX1;
+                        previousY1 = tempY1;
+
+                        Log.d(TAG, "0: " + xProp + ", " + yProp);
                     }
 
                     if(Id == 1) {
 
-                        xProp = (e.getX() - previousX2) / mViewWidth;
-                        yProp = (e.getY() - previousY2) / mViewHeight;
+
+                        xProp = (tempX1 - previousX2) / mViewWidth;
+                        yProp = (tempY1 - previousY2) / mViewHeight;
 
                         mDrawingState.mTexturedMandelbrot.move(new float[]{xProp, yProp});
-                        previousX2 = e.getX();
-                        previousY2 = e.getY();
+                        previousX2 = tempX1;
+                        previousY2 = tempY1;
+
+                        Log.d(TAG, "1: " + xProp + ", " + yProp);
                     }
                 }
 
 
                 if(pointerCount > 1) {
 
+                    if(previousX1 == -1 || previousY1 == -1) {
+                        previousX1 =  tempX1;
+                        previousY1 = tempY1;
+                    }
+
+                    if(previousX2 == -1 || previousY2 == -1) {
+                        previousX2 = tempX2;
+                        previousY2 = tempY2;
+
+                    }
+
                     previousMidpoint = calcMidpoint(
                             previousX1, previousY1,
                             previousX2, previousY2);
 
                     currentMidpoint = calcMidpoint(
-                            e.getX(0), e.getY(0),
-                            e.getX(1), e.getY(1)
+                            tempX1, tempY1,
+                            tempX2, tempY2
                     );
 
                     xProp = (currentMidpoint[0] - previousMidpoint[0]) / mViewWidth;
                     yProp = (currentMidpoint[1] - previousMidpoint[1]) / mViewHeight;
 
                     float a = calcMagnitude(new float[] {previousX2 - previousX1, previousY2 - previousY1}) /
-                            calcMagnitude(new float[] {e.getX(1) - e.getX(0), e.getY(1) - e.getY(0)});
-
-                    Log.d(TAG, " " + a);
+                            calcMagnitude(new float[] {tempX2 - tempX1, tempY2 - tempY1});
 
                     float [] c = new float[] {
                             previousMidpoint[0] - (mViewWidth / 2f),
                             previousMidpoint[1] - (mViewHeight / 2f)};
 
-                    c = scaleVector(c, a);
+                    float [] cTemp = scaleVector(c, a - 1);
 
-                    xProp = xProp + c[0];
-                    yProp = yProp + c[1];
+                    cTemp[0] = cTemp[0] / mViewHeight;
+                    cTemp[1] = cTemp[1] / mViewWidth;
+
+                    xProp = xProp + cTemp[0];
+                    yProp = yProp + cTemp[1];
 
                     mDrawingState.mTexturedMandelbrot.move(new float[] {xProp, yProp});
 
                     mDrawingState.mTexturedMandelbrot.scaleWidth(a);
                     mDrawingState.mTexturedMandelbrot.scaleHeight(a);
 
-                    previousX1 = e.getX(0);
-                    previousY1 = e.getY(0);
-                    previousX2 = e.getX(1);
-                    previousY2 = e.getY(1);
+                    previousX1 = tempX1;
+                    previousY1 = tempY1;
+                    previousX2 = tempX2;
+                    previousY2 = tempY2;
 
                 }
 
