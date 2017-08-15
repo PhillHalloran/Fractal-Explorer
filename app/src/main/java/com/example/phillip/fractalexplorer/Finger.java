@@ -10,30 +10,44 @@ import android.view.MotionEvent;
 
 public class Finger {
 
-    float previousX;
-    float previousY;
-    float currentX;
-    float currentY;
+    private float previousX;
+    private float previousY;
+    private float currentX;
+    private float currentY;
 
-    int pointerID;
+    private int pointerID;
 
-    boolean active;
+    private boolean active;
 
     Finger(float pX, float pY, float cX, float cY, int PID, boolean a){
-        this.previousX = pX;
-        this.previousY = pY;
-        this.currentX = cX;
-        this.currentY = cY;
-        this.pointerID = PID;
-        this.active = a;
+        previousX = pX;
+        previousY = pY;
+        currentX = cX;
+        currentY = cY;
+        pointerID = PID;
+        active = a;
     }
 
+    Finger(float pX, float pY, int PID, boolean a){
+        previousX = pX;
+        previousY = pY;
+        pointerID = PID;
+        active = a;
+    }
+
+    void update(float cX, float cY, int PID){
+        if(pointerID == PID && active){
+            previousX = currentX;
+            previousY = currentY;
+            currentX = cX;
+            currentY = cY;
+        }
+    }
+
+    //This allows for a simple way to set inactive
     void setInactive(){
-        this.active = false;
+        active = false;
     }
 
-    updateFinger(MotionEvent e){
-
-    }
 
 }

@@ -108,8 +108,8 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     }
 
 
-    finger finger1;
-    finger finger2;
+    //finger finger1;
+    //finger finger2;
     float previousX1 = -1f;
     float previousY1 = -1f;
     float previousX2 = -1f;
