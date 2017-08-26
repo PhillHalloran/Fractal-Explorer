@@ -6,9 +6,9 @@ import android.opengl.Matrix;
 import android.os.ConditionVariable;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.support.v4.view.MotionEventCompat;
+import android.support.v4.view.MotionEventCompat; //not sure why this is here either
 
-import java.util.Arrays;
+import java.util.Arrays; // not sure why this is here
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

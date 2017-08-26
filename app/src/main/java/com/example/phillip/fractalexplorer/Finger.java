@@ -1,7 +1,5 @@
 package com.example.phillip.fractalexplorer;
 
-import android.view.MotionEvent;
-
 /**
  * Created by Phillip on 13/08/2017.
  *
@@ -10,44 +8,46 @@ import android.view.MotionEvent;
 
 public class Finger {
 
-    private float previousX;
-    private float previousY;
-    private float currentX;
-    private float currentY;
+    private float mPreviousX;
+    private float mPreviousY;
+    private float mCurrentX;
+    private float mCurrentY;
 
-    private int pointerID;
+    private int mPointerID;
 
-    private boolean active;
+    private boolean mActive;
 
     Finger(float pX, float pY, float cX, float cY, int PID, boolean a){
-        previousX = pX;
-        previousY = pY;
-        currentX = cX;
-        currentY = cY;
-        pointerID = PID;
-        active = a;
+        mPreviousX = pX;
+        mPreviousY = pY;
+        mCurrentX = cX;
+        mCurrentY = cY;
+        mPointerID = PID;
+        mActive = a;
     }
 
     Finger(float pX, float pY, int PID, boolean a){
-        previousX = pX;
-        previousY = pY;
-        pointerID = PID;
-        active = a;
+        mPreviousX = pX;
+        mPreviousY = pY;
+        mPointerID = PID;
+        mActive = a;
     }
 
     void update(float cX, float cY, int PID){
-        if(pointerID == PID && active){
-            previousX = currentX;
-            previousY = currentY;
-            currentX = cX;
-            currentY = cY;
+        if(mPointerID == PID && mActive){
+            mPreviousX = mCurrentX;
+            mPreviousY = mCurrentY;
+            mCurrentX = cX;
+            mCurrentY = cY;
         }
     }
 
     //This allows for a simple way to set inactive
     void setInactive(){
-        active = false;
+        mActive = false;
     }
 
-
+    boolean equ(Finger mFinger) {
+        return false;
+    }
 }
