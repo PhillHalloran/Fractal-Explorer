@@ -1,6 +1,5 @@
 package com.example.phillip.fractalexplorer;
 
-import android.util.Log;
 import android.view.MotionEvent;
 
 /**
@@ -16,19 +15,96 @@ import android.view.MotionEvent;
 public class GestureDetector {
 
     private static final String TAG = FractalExplorerActivity.TAG;
-    //The following does not allow for multiple gestures at once (which is possible)
-    public static final int MOVE = 0;
-    public static final int ZOOM = 1;
-    public static final int ROTATE = 2;
-    public static final int NONE = 3;
 
-    MotionEvent mEvent1;
-    MotionEvent mEvent2;
+    public static final int TWO_FINGER_GESTURE = 2;
+    public static final int SINGLE_FINGER_GESTURE = 1;
+    public static final int NO_GESTURE = 0;
+
+    MotionEvent mPreviousEvent;
+    MotionEvent mCurrentEvent;
 
     public void GestureDetector(){
-
+        mPreviousEvent = null;
+        mCurrentEvent = null;
     }
 
+    public void push(MotionEvent e){
+        if(mPreviousEvent == null) {
+            mPreviousEvent = e;
+        } else if (mCurrentEvent == null) {
+            mCurrentEvent = e;
+        } else {
+            mPreviousEvent = mCurrentEvent;
+            mCurrentEvent = e;
+        }
+    }
 
+    public void dump(){
+        mPreviousEvent = null;
+        mCurrentEvent = null;
+    }
 
+    // This function returns the gesture type or no gesture if none has occurred or the events
+    // break congruence with possible state transitions
+
+    public int gestureCheck(){
+        if (mPreviousEvent == null || mCurrentEvent == null){
+            return NO_GESTURE;
+        }
+
+        int actionPrevious = mPreviousEvent.getActionMasked();
+        int actionCurrent = mCurrentEvent.getActionMasked();
+        int countPrevious = mPreviousEvent.getPointerCount();
+        int countCurrent = mCurrentEvent.getPointerCount();
+
+        switch(actionCurrent) {
+
+            case MotionEvent.ACTION_MOVE:
+                if(countCurrent == 1){
+                    switch(actionPrevious) {
+                        case MotionEvent.ACTION_DOWN:
+                        case MotionEvent.ACTION_MOVE:
+                        case MotionEvent.ACTION_POINTER_UP:
+                            return SINGLE_FINGER_GESTURE;
+                        default:
+                            return NO_GESTURE;
+                    }
+                } else switch (actionPrevious) {
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                    case MotionEvent.ACTION_MOVE:
+                    case MotionEvent.ACTION_POINTER_UP:
+                        return TWO_FINGER_GESTURE;
+                    default:
+                        return NO_GESTURE;
+                }
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_DOWN:
+            case MotionEvent.ACTION_POINTER_UP:
+                switch(actionPrevious) {
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                    case MotionEvent.ACTION_POINTER_UP:
+                    case MotionEvent.ACTION_MOVE:
+                        return TWO_FINGER_GESTURE;
+                    default:
+                        return NO_GESTURE;
+                }
+
+            default:
+                return NO_GESTURE;
+        }
+
+     }
+
+    private boolean isEmpty(){
+        if(mPreviousEvent == null && mCurrentEvent == null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private int activePointer(MotionEvent e) {
+        return e.getPointerId(e.getActionIndex());
+    }
 }
