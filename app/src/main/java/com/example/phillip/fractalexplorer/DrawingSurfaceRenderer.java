@@ -63,18 +63,15 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         *
         */
 
-
         //area of world gets selected, shrunk to 1,1 then blown up to viewport size
         Log.d(TAG, "onSurfaceChanged");
 
         mViewHeight = height;
         mViewWidth = width;
+        float viewRatio = (float) height / (float) width;
 
         GLES20.glViewport(0, 0, width, height);
-        
-        float viewRatio = (float) height / (float) width;
         mDrawingState.mTexturedMandelbrot.setRatio(viewRatio);
-        
         mDrawingState.mTexturedMandelbrot.allocTexturedMandelbrot();
 
         //sets area of world to capture and place within view
@@ -118,7 +115,7 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     public void touchEvent(MotionEvent e) {
         gestureDetector.push(e);
 
-        switch(gestureDetector.gestureCheck()) {
+        switch(gestureDetector.gestureCheck()) { //todo finish this
             case GestureDetector.SINGLE_FINGER_GESTURE:
 
                 break;
@@ -145,7 +142,7 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         return result;
     }
 
-    private float calcAngle(float x0, float y0, float x1, float y1) {
+    private float calcAngle(float x0, float y0, float x1, float y1) { //todo implement this
         final float NOT_READY = 0f;
 
 
