@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
  * Created by Phillip on 29/12/2016.
  */
 
-public class Util {
+public final class Util {
     private static final String TAG = FractalExplorerActivity.TAG;
 
     public static int loadShader(int type, String shaderCode) {
@@ -122,5 +122,25 @@ public class Util {
         if (lastError != GLES20.GL_NO_ERROR) {
             throw new RuntimeException(msg + ": glError " + lastError);
         }
+    }
+
+
+    /**
+     * Functional method for calculation of scaled vectors.
+     * @param v input vector
+     * @param scale float of result vector
+     * @return
+     */
+    public static float [] scaleVector(float [] v, float scale){
+        float [] result = new float[2];
+
+        if(scale == 0f){
+            return result;
+        }
+
+        result[0] = v[0] * scale;
+        result[1] = v[1] * scale;
+
+        return result;
     }
 }

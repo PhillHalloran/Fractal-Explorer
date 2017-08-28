@@ -239,20 +239,6 @@ public class TexturedMandelbrot {
         return result;
     }
 
-    private float [] scaleVector(float [] v, float scale){
-        float [] result = new float[2];
-
-        if(scale == 0f){
-            return result;
-        }
-
-        result[0] = v[0] * scale;
-        result[1] = v[1] * scale;
-
-        return result;
-    }
-
-
     public void setWidth(float w){
         sVecA = setVectorLength(sVecA, w);
     }
@@ -261,24 +247,27 @@ public class TexturedMandelbrot {
         sVecB = setVectorLength(sVecB, h);
     }
 
-    public void scaleWidth(float proportion) {
-        sVecA = scaleVector(sVecA, proportion);
+    public TexturedMandelbrot scaleWidth(float proportion) {
+        sVecA = Util.scaleVector(sVecA, proportion);
+        return this;
     }
 
-    public void scaleHeight(float proportion) {
-        sVecB = scaleVector(sVecB, proportion);
+    public TexturedMandelbrot scaleHeight(float proportion) {
+        sVecB = Util.scaleVector(sVecB, proportion);
+        return this;
     }
 
-    public void move(float [] normalizedOffset) {
+    public TexturedMandelbrot move(float [] normalizedOffset) {
 
-        float [] xVector = scaleVector(sVecA,  2f * normalizedOffset[0]);
-        float [] yVector = scaleVector(sVecB,  2f * normalizedOffset[1]);
+        float [] xVector = Util.scaleVector(sVecA,  2f * normalizedOffset[0]);
+        float [] yVector = Util.scaleVector(sVecB,  2f * normalizedOffset[1]);
 
         sCentrePoint[0] -= xVector[0] + yVector[0];
         sCentrePoint[1] -= xVector[1] + yVector[1];
+        return this;
     }
 
-    public void rotate(float r) {
+    public TexturedMandelbrot rotate(float r) {
         float x, y;
 
         x = sVecA[0];
@@ -293,6 +282,7 @@ public class TexturedMandelbrot {
         sVecB[0] = x * (float)Math.cos(r) - y * (float)Math.sin(r);
         sVecB[1] = x * (float)Math.sin(r) + y * (float)Math.cos(r);
 
+        return this;
     }
 
         public void setTexture(ByteBuffer buf, int width, int height, int format) {
