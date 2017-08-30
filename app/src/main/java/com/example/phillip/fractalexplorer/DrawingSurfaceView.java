@@ -56,7 +56,6 @@ public class DrawingSurfaceView extends GLSurfaceView{
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-        final int pointerCount = e.getPointerCount();
 
         final MotionEvent ev = e; //is this the right way to do this?
 

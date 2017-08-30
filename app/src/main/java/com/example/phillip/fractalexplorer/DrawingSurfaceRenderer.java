@@ -104,30 +104,53 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         syncObj.open();
     }
 
+    private float previousX1;
+    private float previousX2;
+    private float previousY1;
+    private float previousY2;
+    private float currentX1;
+    private float currentX2;
+    private float currentY1;
+    private float currentY2;
     private float xProp;
     private float yProp;
     private float [] previousMidpoint;
     private float [] currentMidpoint;
     private float previousAngle;
-    private GestureDetector gestureDetector;
+    private float currentAngle;
+
+    private GestureDetector gestureDetector = new GestureDetector();
 
 
     public void touchEvent(MotionEvent e) {
         gestureDetector.push(e);
 
-        switch(gestureDetector.gestureCheck()) { //todo finish this
+        switch(gestureDetector.gestureCheck()) {
             case GestureDetector.SINGLE_FINGER_GESTURE:
+                currentX1 = gestureDetector.getCurrentX(0);
+                currentY1 = gestureDetector.getCurrentY(0);
+                previousX1 =
+                        gestureDetector.getPreviousX(
+                                gestureDetector.getPreviousIndex(
+                                        gestureDetector.getCurrentId(0)));
+                previousY1 =
+                        gestureDetector.getPreviousY(
+                                gestureDetector.getPreviousIndex(
+                                        gestureDetector.getCurrentId(0)));
+                xProp = (currentX1 - previousX1) / mViewWidth;
+                yProp = (currentY1 - previousY1) / mViewHeight;
 
+                mDrawingState.mTexturedMandelbrot.move(new float[] {xProp, yProp});
+                mSurfaceView.requestRender();
                 break;
             case GestureDetector.TWO_FINGER_GESTURE:
+                
+                mSurfaceView.requestRender();
                 break;
             case GestureDetector.NO_GESTURE:
-                break;
             default:
                 break;
         }
-
-        mSurfaceView.requestRender(); //todo move to a more efficient location
     }
 
     private float[] calcMidpoint(float x0, float y0, float x1, float y1){

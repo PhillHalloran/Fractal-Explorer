@@ -1,6 +1,7 @@
 package com.example.phillip.fractalexplorer;
 
 import android.view.MotionEvent;
+import android.util.Log;
 
 /**
  * Created by Phillip on 26/08/2017.
@@ -30,13 +31,24 @@ public class GestureDetector {
 
     public void push(MotionEvent e){
         if(mPreviousEvent == null) {
-            mPreviousEvent = e;
+            mPreviousEvent = MotionEvent.obtain(e);
         } else if (mCurrentEvent == null) {
-            mCurrentEvent = e;
+            mCurrentEvent = MotionEvent.obtain(e);
         } else {
             mPreviousEvent = mCurrentEvent;
-            mCurrentEvent = e;
+            mCurrentEvent = MotionEvent.obtain(e);
         }
+    }
+
+    public String toString(){
+        String builder = "";
+        if(mPreviousEvent != null){
+            builder += "P: " + mPreviousEvent.getEventTime();
+        }
+        if(mCurrentEvent != null){
+            builder += ", C: " + mCurrentEvent.getEventTime();
+        }
+        return builder;
     }
 
     public void dump(){
@@ -94,6 +106,30 @@ public class GestureDetector {
                 return NO_GESTURE;
         }
 
+     }
+
+     public int getCurrentId(int pointerIndex){
+         return mCurrentEvent.getPointerId(pointerIndex);
+     }
+
+     public int getPreviousIndex(int Id){
+         return mPreviousEvent.findPointerIndex(Id);
+     }
+
+     public float getPreviousX(int pointerIndex) {
+        return mPreviousEvent.getX(pointerIndex);
+     }
+
+     public float getPreviousY(int pointerIndex) {
+         return mPreviousEvent.getY(pointerIndex);
+     }
+
+     public float getCurrentX(int pointerIndex) {
+        return mCurrentEvent.getX(pointerIndex);
+     }
+
+     public float getCurrentY(int pointerIndex) {
+         return mCurrentEvent.getY(pointerIndex);
      }
 
     private boolean isEmpty(){

@@ -126,8 +126,8 @@ public class TexturedMandelbrot {
     private Gradient mGradient;
     private int mEscapeLimit;
 
-    private static float[] sVecA = new float[2];
-    private static float[] sVecB = new float[2];
+    private static float[] sVecA = new float[2]; // parallel with screen x axis
+    private static float[] sVecB = new float[2]; // parallel with screen y axis
     private static float[] sCentrePoint = new float[2];
 
 
@@ -180,11 +180,12 @@ public class TexturedMandelbrot {
         return (float) Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
     }
 
+
     public float getWidth() {
         return getMagnitude(sVecA);
     }
 
-    public float getheight() {
+    public float getHeight() {
         return getMagnitude(sVecB);
     }
 
