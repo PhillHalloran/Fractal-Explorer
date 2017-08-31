@@ -57,7 +57,7 @@ public class DrawingSurfaceView extends GLSurfaceView{
     @Override
     public boolean onTouchEvent(MotionEvent e) {
 
-        final MotionEvent ev = e; //is this the right way to do this?
+        final MotionEvent ev = MotionEvent.obtain(e); //is this the right way to do this?
 
         queueEvent(new Runnable() {
             @Override public void run() {

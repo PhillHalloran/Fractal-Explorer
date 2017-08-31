@@ -125,6 +125,10 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     public void touchEvent(MotionEvent e) {
         gestureDetector.push(e);
 
+        //the pointer index is ordered at all times
+        //repeat events are being thrown by system
+        Log.d(TAG, gestureDetector.toString());
+
         switch(gestureDetector.gestureCheck()) {
             case GestureDetector.SINGLE_FINGER_GESTURE:
                 currentX1 = gestureDetector.getCurrentX(0);
@@ -144,7 +148,41 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
                 mSurfaceView.requestRender();
                 break;
             case GestureDetector.TWO_FINGER_GESTURE:
-                
+                currentX1 = gestureDetector.getCurrentX(0);
+                currentY1 = gestureDetector.getCurrentY(0);
+                currentX2 = gestureDetector.getCurrentX(1);
+                currentY2 = gestureDetector.getCurrentY(1);
+                previousX1 =
+                        gestureDetector.getPreviousX(
+                                gestureDetector.getPreviousIndex(
+                                        gestureDetector.getCurrentId(0)));
+                previousY1 =
+                        gestureDetector.getPreviousY(
+                                gestureDetector.getPreviousIndex(
+                                        gestureDetector.getCurrentId(0)));
+                previousX2 =
+                        gestureDetector.getPreviousX(
+                                gestureDetector.getPreviousIndex(
+                                        gestureDetector.getCurrentId(1)));
+                previousY2 =
+                        gestureDetector.getPreviousY(
+                                gestureDetector.getPreviousIndex(
+                                        gestureDetector.getCurrentId(1)));
+                currentMidpoint = calcMidpoint(currentX1, currentY1, currentX2, currentY2);
+                previousMidpoint = calcMidpoint(previousX1, previousY1, previousX2, previousY2);
+                xProp = (currentMidpoint[0] - previousMidpoint[0]) / mViewWidth;
+                yProp = (currentMidpoint[1] - previousMidpoint[1]) / mViewHeight;
+
+                float a = calcMagnitude(new float[] {previousX2 - previousX1, previousY2 - previousY1}) /
+                        calcMagnitude(new float[] {currentX2 - currentX1, currentY2 - currentY1});
+                float [] c = new float[] {
+                        previousMidpoint[0] - (mViewWidth / 2f),
+                        previousMidpoint[1] - (mViewHeight / 2f)};
+                c = Util.scaleVector(c, a);
+                mDrawingState.mTexturedMandelbrot
+                        .move(new float[] {xProp, yProp})
+                        .scaleWidth(a)
+                        .scaleHeight(a);
                 mSurfaceView.requestRender();
                 break;
             case GestureDetector.NO_GESTURE:
@@ -153,14 +191,14 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         }
     }
 
-    private float[] calcMidpoint(float x0, float y0, float x1, float y1){
-        float [] result = new float[] {x1 - x0, y1 - y0};
+    private float[] calcMidpoint(float x1, float y1, float x2, float y2){
+        float [] result = new float[] {x2 - x1, y2 - y1};
 
         result[0] *= 0.5f;
         result[1] *= 0.5f;
 
-        result[0] += x0;
-        result[1] += y0;
+        result[0] += x1;
+        result[1] += y1;
 
         return result;
     }

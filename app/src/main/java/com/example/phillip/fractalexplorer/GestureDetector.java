@@ -29,12 +29,13 @@ public class GestureDetector {
         mCurrentEvent = null;
     }
 
+    //add event time checking to avoid unordered events and to throw away duplicates
     public void push(MotionEvent e){
         if(mPreviousEvent == null) {
             mPreviousEvent = MotionEvent.obtain(e);
-        } else if (mCurrentEvent == null) {
+        } else if (mCurrentEvent == null && !mPreviousEvent.equals(mCurrentEvent)) {
             mCurrentEvent = MotionEvent.obtain(e);
-        } else {
+        } else if (!mPreviousEvent.equals(mCurrentEvent)){
             mPreviousEvent = mCurrentEvent;
             mCurrentEvent = MotionEvent.obtain(e);
         }
@@ -43,10 +44,10 @@ public class GestureDetector {
     public String toString(){
         String builder = "";
         if(mPreviousEvent != null){
-            builder += "P: " + mPreviousEvent.getEventTime();
+            builder += "P: " + mPreviousEvent.toString();
         }
         if(mCurrentEvent != null){
-            builder += ", C: " + mCurrentEvent.getEventTime();
+            builder += ",\n C: " + mCurrentEvent.toString();
         }
         return builder;
     }
@@ -85,13 +86,38 @@ public class GestureDetector {
                     case MotionEvent.ACTION_POINTER_DOWN:
                     case MotionEvent.ACTION_MOVE:
                     case MotionEvent.ACTION_POINTER_UP:
-                        return TWO_FINGER_GESTURE;
+                        if(countPrevious > 1) {
+                            return TWO_FINGER_GESTURE;
+                        } else {
+                            return SINGLE_FINGER_GESTURE;
+                        }
                     default:
                         return NO_GESTURE;
                 }
 
             case MotionEvent.ACTION_UP:
+                switch(actionPrevious) {
+                    case MotionEvent.ACTION_MOVE:
+                        return SINGLE_FINGER_GESTURE;
+                    default:
+                        return NO_GESTURE;
+                }
             case MotionEvent.ACTION_POINTER_DOWN:
+                switch(actionPrevious) {
+                    case MotionEvent.ACTION_POINTER_UP:
+                        if(countPrevious == 2) {
+                            return SINGLE_FINGER_GESTURE;
+                        }
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                    case MotionEvent.ACTION_MOVE:
+                        if(countPrevious > 1) {
+                            return TWO_FINGER_GESTURE;
+                        } else {
+                            return SINGLE_FINGER_GESTURE;
+                        }
+                    default:
+                        return NO_GESTURE;
+                }
             case MotionEvent.ACTION_POINTER_UP:
                 switch(actionPrevious) {
                     case MotionEvent.ACTION_POINTER_DOWN:
