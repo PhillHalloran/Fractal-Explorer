@@ -16,9 +16,7 @@ public class FractalExplorerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mDrawingState = new DrawingState();
-
         mGLView = new DrawingSurfaceView(this, mDrawingState);
         setContentView(mGLView);
     }

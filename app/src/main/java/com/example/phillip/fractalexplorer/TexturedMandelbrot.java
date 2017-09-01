@@ -268,6 +268,7 @@ public class TexturedMandelbrot {
         return this;
     }
 
+    // Takes an angular offset in radians
     public TexturedMandelbrot rotate(float r) {
         float x, y;
 

@@ -56,7 +56,7 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     @Override
     public void onSurfaceChanged(GL10 gl10, int width, int height) {
         /*
-        * This function will pass through the width and height on the intial instantiation of the
+        * This function will pass through the width and height on the initial instantiation of the
         * view and also every time the values change. It initialises the calculations of
         * the drawing. For this calculation to happen somewhere else, another method of
         * getting the width and height of the view would have to be sought out.
@@ -77,14 +77,10 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
         //sets area of world to capture and place within view
         Matrix.orthoM(mProjectionMatrix, 0,  -0.5f, 0.5f,
                 -0.5f, 0.5f,  -1, 1);
-        //scale and centre match vertex coords
 }
 
     @Override
     public void onDrawFrame(GL10 unused) {
-
-        DrawingState drawingState = mDrawingState;
-
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         mDrawingState.mTexturedMandelbrot.prepareToDraw();
@@ -125,14 +121,12 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
     public void touchEvent(MotionEvent e) {
         gestureDetector.push(e);
 
-        //the pointer index is ordered at all times
-        //repeat events are being thrown by system
-        Log.d(TAG, gestureDetector.toString());
-
+        //the pointer index is ordered at all times, check IDs for continuity
         switch(gestureDetector.gestureCheck()) {
             case GestureDetector.SINGLE_FINGER_GESTURE:
                 currentX1 = gestureDetector.getCurrentX(0);
                 currentY1 = gestureDetector.getCurrentY(0);
+                
                 previousX1 =
                         gestureDetector.getPreviousX(
                                 gestureDetector.getPreviousIndex(
