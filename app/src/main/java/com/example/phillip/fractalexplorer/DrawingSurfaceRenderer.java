@@ -126,15 +126,8 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
             case GestureDetector.SINGLE_FINGER_GESTURE:
                 currentX1 = gestureDetector.getCurrentX(0);
                 currentY1 = gestureDetector.getCurrentY(0);
-                
-                previousX1 =
-                        gestureDetector.getPreviousX(
-                                gestureDetector.getPreviousIndex(
-                                        gestureDetector.getCurrentId(0)));
-                previousY1 =
-                        gestureDetector.getPreviousY(
-                                gestureDetector.getPreviousIndex(
-                                        gestureDetector.getCurrentId(0)));
+                previousX1 = gestureDetector.getPreviousX(0);
+                previousY1 = gestureDetector.getPreviousY(0);
                 xProp = (currentX1 - previousX1) / mViewWidth;
                 yProp = (currentY1 - previousY1) / mViewHeight;
 
@@ -146,22 +139,10 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
                 currentY1 = gestureDetector.getCurrentY(0);
                 currentX2 = gestureDetector.getCurrentX(1);
                 currentY2 = gestureDetector.getCurrentY(1);
-                previousX1 =
-                        gestureDetector.getPreviousX(
-                                gestureDetector.getPreviousIndex(
-                                        gestureDetector.getCurrentId(0)));
-                previousY1 =
-                        gestureDetector.getPreviousY(
-                                gestureDetector.getPreviousIndex(
-                                        gestureDetector.getCurrentId(0)));
-                previousX2 =
-                        gestureDetector.getPreviousX(
-                                gestureDetector.getPreviousIndex(
-                                        gestureDetector.getCurrentId(1)));
-                previousY2 =
-                        gestureDetector.getPreviousY(
-                                gestureDetector.getPreviousIndex(
-                                        gestureDetector.getCurrentId(1)));
+                previousX1 = gestureDetector.getPreviousX(0);
+                previousY1 = gestureDetector.getPreviousY(0);
+                previousX2 = gestureDetector.getPreviousX(1);
+                previousY2 = gestureDetector.getPreviousY(1);
                 currentMidpoint = calcMidpoint(currentX1, currentY1, currentX2, currentY2);
                 previousMidpoint = calcMidpoint(previousX1, previousY1, previousX2, previousY2);
                 xProp = (currentMidpoint[0] - previousMidpoint[0]) / mViewWidth;
@@ -183,6 +164,7 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
             default:
                 break;
         }
+        gestureDetector.updateIdsOnUp(e);
     }
 
     private float[] calcMidpoint(float x1, float y1, float x2, float y2){

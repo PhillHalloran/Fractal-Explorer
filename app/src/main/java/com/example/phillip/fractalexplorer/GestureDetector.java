@@ -1,7 +1,8 @@
 package com.example.phillip.fractalexplorer;
 
 import android.view.MotionEvent;
-import android.util.Log;
+
+import java.util.ArrayList;
 
 /**
  * Created by Phillip on 26/08/2017.
@@ -23,10 +24,12 @@ public class GestureDetector {
 
     MotionEvent mPreviousEvent;
     MotionEvent mCurrentEvent;
+    ArrayList mIds;
 
-    public void GestureDetector(){
+    GestureDetector(){
         mPreviousEvent = null;
         mCurrentEvent = null;
+        mIds = new ArrayList();
     }
 
     //add event time checking to avoid unordered events and to throw away duplicates
@@ -39,6 +42,7 @@ public class GestureDetector {
             mPreviousEvent = mCurrentEvent;
             mCurrentEvent = MotionEvent.obtain(e);
         }
+        updateIdsOnDown(e);
     }
 
     public String toString(){
@@ -142,20 +146,21 @@ public class GestureDetector {
          return mPreviousEvent.findPointerIndex(Id);
      }
 
-     public float getPreviousX(int pointerIndex) {
-        return mPreviousEvent.getX(pointerIndex);
+
+     public float getPreviousX(int idIndex) {
+        return mPreviousEvent.getX(mPreviousEvent.findPointerIndex((int) mIds.get(idIndex)));
      }
 
-     public float getPreviousY(int pointerIndex) {
-         return mPreviousEvent.getY(pointerIndex);
+     public float getPreviousY(int idIndex) {
+         return mPreviousEvent.getY(mPreviousEvent.findPointerIndex((int) mIds.get(idIndex)));
      }
 
-     public float getCurrentX(int pointerIndex) {
-        return mCurrentEvent.getX(pointerIndex);
+     public float getCurrentX(int idIndex) {
+         return mCurrentEvent.getX(mCurrentEvent.findPointerIndex((int) mIds.get(idIndex)));
      }
 
-     public float getCurrentY(int pointerIndex) {
-         return mCurrentEvent.getY(pointerIndex);
+     public float getCurrentY(int idIndex) {
+         return mCurrentEvent.getY(mCurrentEvent.findPointerIndex((int) mIds.get(idIndex)));
      }
 
     private boolean isEmpty(){
@@ -168,5 +173,30 @@ public class GestureDetector {
 
     private int activePointer(MotionEvent e) {
         return e.getPointerId(e.getActionIndex());
+    }
+
+    private void updateIdsOnDown(MotionEvent e){
+        int action = e.getActionMasked();
+        int currentId = e.getPointerId(e.getActionIndex());
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+                mIds.add(currentId);
+                break;
+        }
+    }
+
+    public void updateIdsOnUp(MotionEvent e) {
+        int action = e.getActionMasked();
+        int currentId = e.getPointerId(e.getActionIndex());
+        switch(action) {
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+                if (mIds.contains(currentId)) {
+                    mIds.remove(mIds.indexOf(currentId));
+                }
+                break;
+        }
+
     }
 }
