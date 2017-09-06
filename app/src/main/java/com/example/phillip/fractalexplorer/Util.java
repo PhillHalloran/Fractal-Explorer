@@ -143,4 +143,14 @@ public final class Util {
 
         return result;
     }
+
+    public static float [] rotateVector(float [] v, float angle){
+        float [] result = new float[2];
+        float x = v[0], y = v[1];
+
+        result[0] = x * (float)Math.cos(angle) - y * (float)Math.sin(angle);
+        result[1] = x * (float)Math.sin(angle) + y * (float)Math.cos(angle);
+
+        return result;
+    }
 }

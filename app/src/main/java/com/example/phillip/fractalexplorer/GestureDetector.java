@@ -22,57 +22,57 @@ public class GestureDetector {
     public static final int SINGLE_FINGER_GESTURE = 1;
     public static final int NO_GESTURE = 0;
 
-    MotionEvent mPreviousEvent;
-    MotionEvent mCurrentEvent;
-    ArrayList mIds;
+    MotionEvent mOldEvent;
+    MotionEvent mNewEvent;
+    ArrayList fingerOrder;
 
     GestureDetector(){
-        mPreviousEvent = null;
-        mCurrentEvent = null;
-        mIds = new ArrayList();
+        mOldEvent = null;
+        mNewEvent = null;
+        fingerOrder = new ArrayList();
     }
 
     //add event time checking to avoid unordered events and to throw away duplicates
     public void push(MotionEvent e){
-        if(mPreviousEvent == null) {
-            mPreviousEvent = MotionEvent.obtain(e);
-        } else if (mCurrentEvent == null && !mPreviousEvent.equals(mCurrentEvent)) {
-            mCurrentEvent = MotionEvent.obtain(e);
-        } else if (!mPreviousEvent.equals(mCurrentEvent)){
-            mPreviousEvent = mCurrentEvent;
-            mCurrentEvent = MotionEvent.obtain(e);
+        if(mOldEvent == null) {
+            mOldEvent = MotionEvent.obtain(e);
+        } else if (mNewEvent == null && !mOldEvent.equals(mNewEvent)) {
+            mNewEvent = MotionEvent.obtain(e);
+        } else if (!mOldEvent.equals(mNewEvent)){
+            mOldEvent = mNewEvent;
+            mNewEvent = MotionEvent.obtain(e);
         }
         updateIdsOnDown(e);
     }
 
     public String toString(){
         String builder = "";
-        if(mPreviousEvent != null){
-            builder += "P: " + mPreviousEvent.toString();
+        if(mOldEvent != null){
+            builder += "P: " + mOldEvent.toString();
         }
-        if(mCurrentEvent != null){
-            builder += ",\n C: " + mCurrentEvent.toString();
+        if(mNewEvent != null){
+            builder += ",\n C: " + mNewEvent.toString();
         }
         return builder;
     }
 
     public void dump(){
-        mPreviousEvent = null;
-        mCurrentEvent = null;
+        mOldEvent = null;
+        mNewEvent = null;
     }
 
     // This function returns the gesture type or no gesture if none has occurred or the events
     // break congruence with possible state transitions
 
     public int gestureCheck(){
-        if (mPreviousEvent == null || mCurrentEvent == null){
+        if (mOldEvent == null || mNewEvent == null){
             return NO_GESTURE;
         }
 
-        int actionPrevious = mPreviousEvent.getActionMasked();
-        int actionCurrent = mCurrentEvent.getActionMasked();
-        int countPrevious = mPreviousEvent.getPointerCount();
-        int countCurrent = mCurrentEvent.getPointerCount();
+        int actionPrevious = mOldEvent.getActionMasked();
+        int actionCurrent = mNewEvent.getActionMasked();
+        int countPrevious = mOldEvent.getPointerCount();
+        int countCurrent = mNewEvent.getPointerCount();
 
         switch(actionCurrent) {
 
@@ -138,33 +138,46 @@ public class GestureDetector {
 
      }
 
+     public float [][] getFinger(int fingerNumber) {
+         float [][] finger;
+         int fingerId = (int) fingerOrder.get(fingerNumber);
+         int oldIndex = mOldEvent.findPointerIndex(fingerId);
+         int newIndex = mNewEvent.findPointerIndex(fingerId);
+         finger = new float [][]
+                 {
+                         {mOldEvent.getX(oldIndex), mOldEvent.getY(oldIndex)},
+                         {mNewEvent.getX(newIndex), mNewEvent.getY(newIndex)}
+                 };
+         return finger;
+     }
+     
      public int getCurrentId(int pointerIndex){
-         return mCurrentEvent.getPointerId(pointerIndex);
+         return mNewEvent.getPointerId(pointerIndex);
      }
 
      public int getPreviousIndex(int Id){
-         return mPreviousEvent.findPointerIndex(Id);
+         return mOldEvent.findPointerIndex(Id);
      }
 
 
-     public float getPreviousX(int idIndex) {
-        return mPreviousEvent.getX(mPreviousEvent.findPointerIndex((int) mIds.get(idIndex)));
+     public float getPreviousX(int fingerNumber) {
+        return mOldEvent.getX(mOldEvent.findPointerIndex((int) fingerOrder.get(fingerNumber)));
      }
 
-     public float getPreviousY(int idIndex) {
-         return mPreviousEvent.getY(mPreviousEvent.findPointerIndex((int) mIds.get(idIndex)));
+     public float getPreviousY(int fingerNumber) {
+         return mOldEvent.getY(mOldEvent.findPointerIndex((int) fingerOrder.get(fingerNumber)));
      }
 
-     public float getCurrentX(int idIndex) {
-         return mCurrentEvent.getX(mCurrentEvent.findPointerIndex((int) mIds.get(idIndex)));
+     public float getCurrentX(int fingerNumber) {
+         return mNewEvent.getX(mNewEvent.findPointerIndex((int) fingerOrder.get(fingerNumber)));
      }
 
-     public float getCurrentY(int idIndex) {
-         return mCurrentEvent.getY(mCurrentEvent.findPointerIndex((int) mIds.get(idIndex)));
+     public float getCurrentY(int fingernumber) {
+         return mNewEvent.getY(mNewEvent.findPointerIndex((int) fingerOrder.get(fingernumber)));
      }
 
     private boolean isEmpty(){
-        if(mPreviousEvent == null && mCurrentEvent == null) {
+        if(mOldEvent == null && mNewEvent == null) {
             return true;
         } else {
             return false;
@@ -181,7 +194,7 @@ public class GestureDetector {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN:
-                mIds.add(currentId);
+                fingerOrder.add(currentId);
                 break;
         }
     }
@@ -192,8 +205,8 @@ public class GestureDetector {
         switch(action) {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_POINTER_UP:
-                if (mIds.contains(currentId)) {
-                    mIds.remove(mIds.indexOf(currentId));
+                if (fingerOrder.contains(currentId)) {
+                    fingerOrder.remove(fingerOrder.indexOf(currentId));
                 }
                 break;
         }
