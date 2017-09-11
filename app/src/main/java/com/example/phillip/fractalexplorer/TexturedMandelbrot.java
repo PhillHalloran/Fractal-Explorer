@@ -1,5 +1,7 @@
 package com.example.phillip.fractalexplorer;
 
+
+//todo refactor this trash
 /**
  * Created by Phillip on 21/01/2017.
  */
@@ -139,8 +141,9 @@ public class TexturedMandelbrot {
     private static final int BYTES_PER_PIXEL = 4;
 
     //bounds are calculated to match pixel ratio
-    TexturedMandelbrot(float minI, float maxI,
-                       float minJ, float maxJ,
+    //todo overload constructor, basic version, full control version
+    TexturedMandelbrot(float [] vecA,
+                       float [] vecB,
                        int escapeLimit,
                        Gradient gradient){
 
@@ -157,6 +160,7 @@ public class TexturedMandelbrot {
         fb.position(0);
         mTexBuffer = fb;
 
+        // todo fix below
         sVecA[0] = 2f;
         sVecA[1] = 0f;
         sVecB[0] = 0f;

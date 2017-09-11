@@ -23,27 +23,23 @@ public class DrawingState {
     private static final int ESCAPE_LIMIT = 150;
 
     // TODO: 6/02/2017 remove unused stuff below
-    private float MINIMUM_I = -2f;
-    private float MAXIMUM_I = 2f;
-    private float MINIMUM_J = -2f;
-    private float MAXIMUM_J = 2f;
-
+    private float [] vecA = new float [] {2f, 0};
+    private float [] vecB = new float [] {0, 2f};
 
     private static final Gradient mGradient = new Gradient(
-            new ColorProportion(0f,   0f, 0f, 255f, 0f),
-            new ColorProportion(0f,   0f, 0f, 255f, 1f));
+            new ColorProportion(0f,   0f, 80f, 255f, 0f),
+            new ColorProportion(0f,   250f, 50f, 255f, 1f));
 
 
     public TexturedMandelbrot mTexturedMandelbrot;
 
 
     DrawingState(){
-        mGradient.add(new ColorProportion(150f, 40f, 40f, 255f, 0.15f));
-        mGradient.add(new ColorProportion(0f, 0f, 0f, 255f, 0.05f));
+        mGradient.add(new ColorProportion(15f, 200f, 120f, 255f, 0.15f));
+        mGradient.add(new ColorProportion(90f, 0f, 0f, 255f, 0.05f));
 
         mTexturedMandelbrot =
-                new TexturedMandelbrot(
-                        MINIMUM_I, MAXIMUM_I, MINIMUM_J, MAXIMUM_J, ESCAPE_LIMIT, mGradient);
+                new TexturedMandelbrot(vecA, vecB, ESCAPE_LIMIT, mGradient);
     }
 
 

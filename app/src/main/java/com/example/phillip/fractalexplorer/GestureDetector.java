@@ -56,11 +56,6 @@ public class GestureDetector {
         return builder;
     }
 
-    public void dump(){
-        mOldEvent = null;
-        mNewEvent = null;
-    }
-
     // This function returns the gesture type or no gesture if none has occurred or the events
     // break congruence with possible state transitions
 
@@ -150,15 +145,6 @@ public class GestureDetector {
                  };
          return finger;
      }
-     
-     public int getCurrentId(int pointerIndex){
-         return mNewEvent.getPointerId(pointerIndex);
-     }
-
-     public int getPreviousIndex(int Id){
-         return mOldEvent.findPointerIndex(Id);
-     }
-
 
      public float getPreviousX(int fingerNumber) {
         return mOldEvent.getX(mOldEvent.findPointerIndex((int) fingerOrder.get(fingerNumber)));
@@ -175,18 +161,6 @@ public class GestureDetector {
      public float getCurrentY(int fingernumber) {
          return mNewEvent.getY(mNewEvent.findPointerIndex((int) fingerOrder.get(fingernumber)));
      }
-
-    private boolean isEmpty(){
-        if(mOldEvent == null && mNewEvent == null) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private int activePointer(MotionEvent e) {
-        return e.getPointerId(e.getActionIndex());
-    }
 
     private void updateIdsOnDown(MotionEvent e){
         int action = e.getActionMasked();

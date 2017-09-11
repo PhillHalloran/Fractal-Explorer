@@ -17,13 +17,13 @@ import java.util.Collections;
  * colour respectively. These components together give us a 3 dimensional space representing all
  * possible colours. If we pick 2 points within this space, and connect them with a line, this is
  * the shortest distance between the 2 colours. If we take this line and look at the colour points
- * it passes between it will show a smooth transition between the 2 colours. Let a function
+ * it passes between it will show a 'smooth' transition between the 2 colours. Let a function
  * represent the rate at which we move along this line. This function determines what kind of colour
  * gradient is being represented.
  * <p>
  * This is an implementation of a linear gradient which supports
  * the transition between multiple colours. Each colour is defined with
- * a normalised (with respect to distance between colours) proportion of the gradient and an RGB
+ * a normalised (with respect to distance between colours) proportion of the gradient and an GL_RGBA
  * colour value, in component form.
  */
 
