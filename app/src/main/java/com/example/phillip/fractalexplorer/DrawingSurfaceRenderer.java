@@ -163,12 +163,6 @@ public class DrawingSurfaceRenderer implements GLSurfaceView.Renderer{
                 offset[X] = offset[X] / (mViewWidth);
                 offset[Y] = offset[Y] / (mViewHeight);
 
-                Log.d(TAG,
-                        "Offset: " + offset[X] + ", " + offset[Y] +
-                                " Scale: " + scale +
-                                " Angle: " + angleDifference +
-                                "\n");
-
                 mDrawingState.mTexturedMandelbrot
                         .rotate(angleDifference)
                         .move(offset)
