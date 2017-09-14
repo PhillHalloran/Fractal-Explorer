@@ -124,13 +124,6 @@ public final class Util {
         }
     }
 
-
-    /**
-     * Functional method for calculation of scaled vectors.
-     * @param v input vector
-     * @param scale float of result vector
-     * @return
-     */
     public static float [] scaleVector(float [] v, float scale){
         float [] result = new float[2];
 
@@ -140,6 +133,19 @@ public final class Util {
 
         result[0] = v[0] * scale;
         result[1] = v[1] * scale;
+
+        return result;
+    }
+
+    public static double [] scaleVector(double [] v, float scale){
+        double [] result = new double[2];
+
+        if(scale == 0f){
+            return result;
+        }
+
+        result[0] = v[0] * (double) scale;
+        result[1] = v[1] * (double) scale;
 
         return result;
     }

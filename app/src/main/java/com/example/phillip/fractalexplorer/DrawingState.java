@@ -22,9 +22,9 @@ public class DrawingState {
 
     private static final int ESCAPE_LIMIT = 150;
 
-    // TODO: 6/02/2017 remove unused stuff below
-    private float [] vecA = new float [] {2f, 0};
-    private float [] vecB = new float [] {0, 2f};
+    private double [] vecA = new double [] {2d, 0d};
+    private double [] vecB = new double [] {0d, 2d};
+    private double [] centrePoint = new double[] {0d, 0d};
 
     private static final Gradient mGradient = new Gradient(
             new ColorProportion(0f,   0f, 80f, 255f, 0f),
@@ -38,8 +38,13 @@ public class DrawingState {
         mGradient.add(new ColorProportion(15f, 200f, 120f, 255f, 0.15f));
         mGradient.add(new ColorProportion(90f, 0f, 0f, 255f, 0.05f));
 
-        mTexturedMandelbrot =
-                new TexturedMandelbrot(vecA, vecB, ESCAPE_LIMIT, mGradient);
+        mTexturedMandelbrot = new TexturedMandelbrot(
+                vecA,
+                vecB,
+                centrePoint,
+                ESCAPE_LIMIT,
+                TexturedMandelbrot.EMULATED_DOUBLE,
+                mGradient);
     }
 
 

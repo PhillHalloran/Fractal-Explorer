@@ -13,14 +13,15 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
-
-import javax.microedition.khronos.opengles.GL;
 
 public class TexturedMandelbrot {
     private static final String TAG = FractalExplorerActivity.TAG;
 
-    // todo add double shaders here
+    static public final int F32 = 0;
+    static public final int EMULATED_DOUBLE = 1;
+    
+    static final int PRECISION_MODEL_COUNT = 2;
+    
     static final String VERTEX_SHADER_CODE =
             "uniform mat4 u_mvpMatrix;" +       // model/view/projection matrix
                     "attribute vec4 a_position;" +      // vertex data for us to transform
@@ -32,7 +33,7 @@ public class TexturedMandelbrot {
                     "  v_texCoord = a_texCoord;" +
                     "}";
 
-    static final String FRAGMENT_SHADER_CODE =
+    static final String F32_FRAGMENT_SHADER_CODE =
             "precision mediump float;" +
                     "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
                     "varying vec2 v_texCoord;" +     // vertex coord, proportion
@@ -58,7 +59,7 @@ public class TexturedMandelbrot {
                     "  gl_FragColor = texture2D(u_texture, textureIndex);" +
                     "}";
 
-    static final String EMULATED_FRAGMENT_SHADER_CODE =
+    static final String EMULATED_DOUBLE_FRAGMENT_SHADER_CODE =
             "precision mediump float;" +
                     "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
                     "varying vec4 v_texCoord;" +     // vertex coord, proportion
@@ -67,27 +68,10 @@ public class TexturedMandelbrot {
                     "uniform vec4 u_vecB;"+
                     "uniform int u_iter;" +            // escape limit
 
-                    "void main() {" +
-                    "  vec4 z, c;" +
-                    "  vec2 textureIndex;" +
+                    "void main();" +
+                    "boolean ds_greater_than(in vec2, in vec2);" +
 
-                    // start point
-                    "c.xy = ds_add(ds_add(ds_add(u_cp.xy, -u_vecA.xy), -u_vecB.xy), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.xy), ds_mull(ds_set(v_texCoord.y), u_vecB.xy))))" +
-                    "c.zw = ds_add(ds_add(ds_add(u_cp.zw, -u_vecA.zw), -u_vecB.zw), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.zw), ds_mull(ds_set(v_texCoord.y), u_vecB.zw))))" +
-                    "  int i;" +
-                    "  z = c;" +
-                    "  for(i = 0; i < u_iter; i++) {" +
-                    "    if(ds_greater_than(ds_add(ds_mul(z.xy, z.xy), ds_mul(z.zw, z.zw)), ds_set(4.0)) break;" +
-                    "    z = vec4(ds_add(ds_mul(z.xy, z.xy), -ds_mul(z.zw, z.zw)), ds_mul(ds_mul(ds_set(2.0), z.xy), z.zw)) + c;" +
-                    "  }" +
-
-                    "  textureIndex.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
-                    "  textureIndex.y = 0.0;"+
-                    "  gl_FragColor = texture2D(u_texture, textureIndex);" +
-                    "}" +
-
-                    // returns true if dsA > dsB
-                    "boolean ds_greater_than(vec2 dsA, vec2 dsB) {" +
+                    "boolean ds_greater_than(in vec2 dsA, in vec2 dsB) {" +
                     "  if(dsA.x != dsB.x) {" +
                     "    return dsA.x > dsB.x;" +
                     "  } else {" +
@@ -96,11 +80,11 @@ public class TexturedMandelbrot {
                     "}" +
 
                     "vec2 ds_set(float a) {" +
-                    "  vec2 z;" +
+                    "  vec2 new;" +
 
-                    "  z.x = a;" +
-                    "  z.y = 0.0;" +
-                    "  return z;" +
+                    "  new.x = a;" +
+                    "  new.y = 0.0;" +
+                    "  return new;" +
                     "  }" +
 
                     "vec2 ds_add(vec2 dsA, vec2 dsB) {" +
@@ -140,9 +124,34 @@ public class TexturedMandelbrot {
                     "  dsC.y = t2 - (dsC.x - t1);" +
 
                     "  return dsC;" +
+                    "}" +
+
+                    "void main() {" +
+                    "  vec4 z, c;" +
+                    "  vec2 textureIndex;" +
+
+                    // start point
+                    "c.xy = ds_add(ds_add(ds_add(u_cp.xy, -u_vecA.xy), -u_vecB.xy), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.xy), ds_mull(ds_set(v_texCoord.y), u_vecB.xy))))" +
+                    "c.zw = ds_add(ds_add(ds_add(u_cp.zw, -u_vecA.zw), -u_vecB.zw), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.zw), ds_mull(ds_set(v_texCoord.y), u_vecB.zw))))" +
+                    "  int i;" +
+                    "  z = c;" +
+                    "  for(i = 0; i < u_iter; i++) {" +
+                    "    if(ds_greater_than(ds_add(ds_mul(z.xy, z.xy), ds_mul(z.zw, z.zw)), ds_set(4.0)) break;" +
+                    "    z = vec4(ds_add(ds_mul(z.xy, z.xy), -ds_mul(z.zw, z.zw)), ds_mul(ds_mul(ds_set(2.0), z.xy), z.zw)) + c;" +
+                    "  }" +
+
+                    "  textureIndex.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
+                    "  textureIndex.y = 0.0;"+
+                    "  gl_FragColor = texture2D(u_texture, textureIndex);" +
                     "}";
+
+;
             ;
 
+    static String[] FRAGMENT_SHADER_LIST = new String[] {
+            F32_FRAGMENT_SHADER_CODE,
+            EMULATED_DOUBLE_FRAGMENT_SHADER_CODE};
+    
     /**
      * Model/view matrix for this object.  Updated by setPosition() and setScale().  This
      * should be merged with the projection matrix when it's time to draw the object.
@@ -179,9 +188,10 @@ public class TexturedMandelbrot {
 
     // References to vertex data.
     private static FloatBuffer sVertexBuffer = sVertexArray;
+    
+    // todo Check below for variables that shouldn't be static
 
-    // Handles to uniforms and attributes in the shader.
-    private static int sProgramHandle = -1;
+    // Handles to uniforms and attributes in the shaders
     private static int sTexCoordHandle = -1;
     private static int sPositionHandle = -1;
     private static int sMVPMatrixHandle = -1;
@@ -189,7 +199,8 @@ public class TexturedMandelbrot {
     private static int sVecAUniformHandle = -1;
     private static int sVecBUniformHandle = -1;
     private static int sCentrePointHandle = -1;
-
+    private static int[] sProgramHandles = new int[PRECISION_MODEL_COUNT];
+    
     // Texture data for this instance.
     private int mTextureDataHandle = -1;
     private int mTextureWidth = -1;
@@ -209,10 +220,11 @@ public class TexturedMandelbrot {
 
     private Gradient mGradient;
     private int mEscapeLimit;
+    private static int sPrecision;
 
-    private static float[] sVecA = new float[2]; // parallel with screen x axis
-    private static float[] sVecB = new float[2]; // parallel with screen y axis
-    private static float[] sCentrePoint = new float[2];
+    private static double[] sVecA = new double[2]; // parallel with screen x axis
+    private static double[] sVecB = new double[2]; // parallel with screen y axis
+    private static double[] sCentrePoint = new double[2];
 
 
     private static float[] sTempMVP = new float[16];
@@ -223,13 +235,16 @@ public class TexturedMandelbrot {
     private static final int BYTES_PER_PIXEL = 4;
 
     //bounds are calculated to match pixel ratio
-    //todo overload constructor, basic version, full control version
-    TexturedMandelbrot(float [] vecA,
-                       float [] vecB,
+    //todo overload constructor
+    TexturedMandelbrot(double [] vecA,
+                       double [] vecB,
+                       double [] centrePoint,
                        int escapeLimit,
+                       int precision,
                        Gradient gradient){
 
         mGradient = gradient;
+        sPrecision = precision;
 
         mModelView = new float[16];
         Matrix.setIdentityM(mModelView, 0);
@@ -242,27 +257,27 @@ public class TexturedMandelbrot {
         fb.position(0);
         mTexBuffer = fb;
 
-        // todo fix below
-        sVecA[0] = 2f;
-        sVecA[1] = 0f;
-        sVecB[0] = 0f;
-        sVecB[1] = 2f;
-        sCentrePoint[0] = 0f;
-        sCentrePoint[1] = 0f;
+        sVecA = vecA;
+        sVecB = vecB;
+        sCentrePoint = centrePoint;
 
         mEscapeLimit = escapeLimit;
         mTextureWidth = escapeLimit;
     }
 
-    // TODO: 5/02/2017 parameter setter methods -cp -veca -vecb
+    // TODO: 5/02/2017 parameter setter methods -cp -veca -vecb, necessary for what? this vs new mandelbrot instance
 
-    // TODO: 5/02/2017 get bounding parameters
+    // TODO: 5/02/2017 get bounding parameters, for saving state
 
     public int getLimit() {
         return mEscapeLimit;
     }
 
-    private float getMagnitude(float [] vector) {
+    public int getPrecision() {
+        return sPrecision;
+    }
+
+    private float getMagnitude(double [] vector) {
         return (float) Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
     }
 
@@ -309,16 +324,16 @@ public class TexturedMandelbrot {
 
     }
 
-    private float [] setVectorLength(float[] v, float l) {
-
-        float [] result = new float[2];
+    private double [] setVectorLength(double[] v, float l) {
+        double length = (double) l;
+        double [] result = new double[2];
 
         if(l == 0f) {
             return result;
         }
 
-        float m = (float) Math.sqrt(v[0] * v[0] + v[1] * v[1]);
-        float scale = l / m;
+        double m = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+        double scale = l / m;
 
         result[0] = v[0] * scale;
         result[1] = v[1] * scale;
@@ -346,8 +361,8 @@ public class TexturedMandelbrot {
 
     public TexturedMandelbrot move(float [] normalizedOffset) {
 
-        float [] xVector = Util.scaleVector(sVecA,  2f * normalizedOffset[0]);
-        float [] yVector = Util.scaleVector(sVecB,  2f * normalizedOffset[1]);
+        double [] xVector = Util.scaleVector(sVecA,  2f * normalizedOffset[0]);
+        double [] yVector = Util.scaleVector(sVecB,  2f * normalizedOffset[1]);
 
         sCentrePoint[0] -= xVector[0] + yVector[0];
         sCentrePoint[1] -= xVector[1] + yVector[1];
@@ -356,19 +371,19 @@ public class TexturedMandelbrot {
 
     // Takes an angular offset in radians
     public TexturedMandelbrot rotate(float r) {
-        float x, y;
+        double x, y;
 
         x = sVecA[0];
         y = sVecA[1];
 
-        sVecA[0] = x * (float)Math.cos(r) - y * (float)Math.sin(r);
-        sVecA[1] = x * (float)Math.sin(r) + y * (float)Math.cos(r);
+        sVecA[0] = x * (double)Math.cos(r) - y * (double)Math.sin(r);
+        sVecA[1] = x * (double)Math.sin(r) + y * (double)Math.cos(r);
 
         x = sVecB[0];
         y = sVecB[1];
 
-        sVecB[0] = x * (float)Math.cos(r) - y * (float)Math.sin(r);
-        sVecB[1] = x * (float)Math.sin(r) + y * (float)Math.cos(r);
+        sVecB[0] = x * (double)Math.cos(r) - y * (double)Math.sin(r);
+        sVecB[1] = x * (double)Math.sin(r) + y * (double)Math.cos(r);
 
         return this;
     }
@@ -402,43 +417,45 @@ public class TexturedMandelbrot {
     /**
      * Creates the GL program and associated references.
      */
+
+    // todo look at the order of location getters below, is this required or preferential
     public static void createProgram() {
-        sProgramHandle = Util.createProgram(VERTEX_SHADER_CODE,
-                FRAGMENT_SHADER_CODE);
-        Log.d(TAG, "Created program " + sProgramHandle);
+        sProgramHandles[sPrecision]= Util.createProgram(VERTEX_SHADER_CODE,
+                FRAGMENT_SHADER_LIST[sPrecision]);
+        Log.d(TAG, "Created program " + sProgramHandles[sPrecision]);
 
         // Get handle to vertex shader's a_position member.
-        sPositionHandle = GLES20.glGetAttribLocation(sProgramHandle, "a_position");
+        sPositionHandle = GLES20.glGetAttribLocation(sProgramHandles[sPrecision], "a_position");
         Util.checkGlError("glGetAttribLocation");
 
         // Get handle to vertex shader's a_texCoord member.
-        sTexCoordHandle = GLES20.glGetAttribLocation(sProgramHandle, "a_texCoord");
+        sTexCoordHandle = GLES20.glGetAttribLocation(sProgramHandles[sPrecision], "a_texCoord");
         Log.d(TAG, "texCoordHandle" + sTexCoordHandle);
         Util.checkGlError("glGetAttribLocation");
 
         // Get handle to transformation matrix.
-        sMVPMatrixHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_mvpMatrix");
+        sMVPMatrixHandle = GLES20.glGetUniformLocation(sProgramHandles[sPrecision], "u_mvpMatrix");
         Util.checkGlError("glGetUniformLocation");
 
         // Get handle to texture reference.
-        int textureUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_texture");
+        int textureUniformHandle = GLES20.glGetUniformLocation(sProgramHandles[sPrecision], "u_texture");
         Util.checkGlError("glGetUniformLocation");
 
-        sVecAUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_vecA");
+        sVecAUniformHandle = GLES20.glGetUniformLocation(sProgramHandles[sPrecision], "u_vecA");
         Util.checkGlError("glGetUniformLocation");
 
-        sVecBUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_vecB");
+        sVecBUniformHandle = GLES20.glGetUniformLocation(sProgramHandles[sPrecision], "u_vecB");
         Util.checkGlError("glGetUniformLocation");
 
-        sCentrePointHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_cp");
+        sCentrePointHandle = GLES20.glGetUniformLocation(sProgramHandles[sPrecision], "u_cp");
         Util.checkGlError("glGetUniformLocation");
 
-        sIterUniformHandle = GLES20.glGetUniformLocation(sProgramHandle, "u_iter");
+        sIterUniformHandle = GLES20.glGetUniformLocation(sProgramHandles[sPrecision], "u_iter");
         Util.checkGlError("glGetUniformLocation");
 
         // Set u_texture to reference texture unit 0.  (We don't change the value, so we can just
         // set it here.)
-        GLES20.glUseProgram(sProgramHandle);
+        GLES20.glUseProgram(sProgramHandles[sPrecision]);
         GLES20.glUniform1i(textureUniformHandle, 0);
         Util.checkGlError("glUniform1i");
         GLES20.glUseProgram(0);
@@ -467,7 +484,7 @@ public class TexturedMandelbrot {
 
     public static void prepareToDraw(){
         // Select our program.
-        GLES20.glUseProgram(sProgramHandle);
+        GLES20.glUseProgram(sProgramHandles[sPrecision]);
         Util.checkGlError("glUseProgram");
 
         // Enable the "a_position" vertex attribute.
@@ -501,7 +518,6 @@ public class TexturedMandelbrot {
     /**
      * Draws the textured rect.
      */
-    // todo this is the draw for float precision
     public void draw() {
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("draw start");
         if (!sDrawPrepared) {
@@ -514,7 +530,6 @@ public class TexturedMandelbrot {
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glVertexAttribPointer");
 
 
-
         // Compute model/view/projection matrix.
         float[] mvp = sTempMVP;     // scratch storage
         Matrix.multiplyMM(mvp, 0, DrawingSurfaceRenderer.mProjectionMatrix, 0, mModelView, 0);
@@ -523,11 +538,25 @@ public class TexturedMandelbrot {
         GLES20.glUniformMatrix4fv(sMVPMatrixHandle, 1, false, mvp, 0);
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glUniformMatrix4fv");
 
-        GLES20.glUniform2fv(sVecAUniformHandle, 1, FloatBuffer.wrap(sVecA));
+        switch(sPrecision){
+            case F32:
+                GLES20.glUniform2fv(sVecAUniformHandle, 1, FloatBuffer.wrap(vecToF32(sVecA)));
 
-        GLES20.glUniform2fv(sVecBUniformHandle, 1, FloatBuffer.wrap(sVecB));
+                GLES20.glUniform2fv(sVecBUniformHandle, 1, FloatBuffer.wrap(vecToF32(sVecB)));
 
-        GLES20.glUniform2fv(sCentrePointHandle, 1, FloatBuffer.wrap(sCentrePoint));
+                GLES20.glUniform2fv(sCentrePointHandle, 1, FloatBuffer.wrap(vecToF32(sCentrePoint)));
+                break;
+            case EMULATED_DOUBLE:
+                GLES20.glUniform4fv(sVecAUniformHandle, 1, FloatBuffer.wrap(vecToDs(sVecA)));
+
+                GLES20.glUniform4fv(sVecBUniformHandle, 1, FloatBuffer.wrap(vecToDs(sVecB)));
+
+                GLES20.glUniform4fv(sCentrePointHandle, 1, FloatBuffer.wrap(vecToDs(sCentrePoint)));
+                break;
+            
+        }
+        
+        
 
         GLES20.glUniform1i(sIterUniformHandle, mEscapeLimit);
 
@@ -547,4 +576,19 @@ public class TexturedMandelbrot {
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("glDrawArrays");
     }
 
+
+    private float[] vecToF32(double[] vec) {
+        return new float[] {(float) vec[0], (float) vec[1]};
+    }
+
+    private float[] floatsForGL(double d) {
+        return new float[] {(float) d, (float) (d - (float) d)};
+    }
+    
+    private float[] vecToDs(double[] vec) {
+        float[] temp1 = floatsForGL(vec[0]);
+        float[] temp2 = floatsForGL(vec[1]);
+
+        return new float[] {temp1[0], temp1[1], temp2[0], temp2[1]};
+    }
 }
