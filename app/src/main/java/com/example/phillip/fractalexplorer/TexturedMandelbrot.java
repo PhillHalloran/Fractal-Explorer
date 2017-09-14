@@ -72,14 +72,13 @@ public class TexturedMandelbrot {
                     "  vec2 textureIndex;" +
 
                     // start point
-                    //"c = u_cp - u_vecA - u_vecB + (2.0 * (v_texCoord.x * u_vecA + v_texCoord.y * u_vecB));"+
                     "c.xy = ds_add(ds_add(ds_add(u_cp.xy, -u_vecA.xy), -u_vecB.xy), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.xy), ds_mull(ds_set(v_texCoord.y), u_vecB.xy))))" +
                     "c.zw = ds_add(ds_add(ds_add(u_cp.zw, -u_vecA.zw), -u_vecB.zw), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.zw), ds_mull(ds_set(v_texCoord.y), u_vecB.zw))))" +
                     "  int i;" +
                     "  z = c;" +
                     "  for(i = 0; i < u_iter; i++) {" +
-                    "    if((z.xz.x + z.yz.y) > 4.0) break;" +
-                    "    z = (vec2(z.x * z.x - z.y * z.y, 2.0 * z.y * z.x) + c);" +
+                    "    if(ds_greater_than(ds_add(ds_mul(z.xy, z.xy), ds_mul(z.zw, z.zw)), ds_set(4.0)) break;" +
+                    "    z = vec4(ds_add(ds_mul(z.xy, z.xy), -ds_mul(z.zw, z.zw)), ds_mul(ds_mul(ds_set(2.0), z.xy), z.zw)) + c;" +
                     "  }" +
 
                     "  textureIndex.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
@@ -87,13 +86,22 @@ public class TexturedMandelbrot {
                     "  gl_FragColor = texture2D(u_texture, textureIndex);" +
                     "}" +
 
-                    "vec2 ds_set(float a)" +
-                    "    {" +
-                    "    vec2 z;" +
-                    "    z.x = a;" +
-                    "    z.y = 0.0;" +
-                    "    return z;" +
-                    "    }" +
+                    // returns true if dsA > dsB
+                    "boolean ds_greater_than(vec2 dsA, vec2 dsB) {" +
+                    "  if(dsA.x != dsB.x) {" +
+                    "    return dsA.x > dsB.x;" +
+                    "  } else {" +
+                    "    return dsA.y > dsB.y;" +
+                    "  }" +
+                    "}" +
+
+                    "vec2 ds_set(float a) {" +
+                    "  vec2 z;" +
+
+                    "  z.x = a;" +
+                    "  z.y = 0.0;" +
+                    "  return z;" +
+                    "  }" +
 
                     "vec2 ds_add(vec2 dsA, vec2 dsB) {" +
                     "  vec2 dsC;"+
