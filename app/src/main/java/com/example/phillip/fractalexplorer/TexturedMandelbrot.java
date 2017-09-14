@@ -20,6 +20,7 @@ import javax.microedition.khronos.opengles.GL;
 public class TexturedMandelbrot {
     private static final String TAG = FractalExplorerActivity.TAG;
 
+    // todo add double shaders here
     static final String VERTEX_SHADER_CODE =
             "uniform mat4 u_mvpMatrix;" +       // model/view/projection matrix
                     "attribute vec4 a_position;" +      // vertex data for us to transform
@@ -34,32 +35,105 @@ public class TexturedMandelbrot {
     static final String FRAGMENT_SHADER_CODE =
             "precision mediump float;" +
                     "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
-                    "varying vec2 v_texCoord;" +     // tex coord passed from vertex shader
+                    "varying vec2 v_texCoord;" +     // vertex coord, proportion
                     "uniform vec2 u_cp;" +
                     "uniform vec2 u_vecA;"+
                     "uniform vec2 u_vecB;"+
                     "uniform int u_iter;" +            // escape limit
 
                     "void main() {" +
-                    "  vec2 z, c, texCoord;" +
+                    "  vec2 z, c, textureIndex;" +
 
-                    "c = u_cp - u_vecA - u_vecB + vec2(2.0) * (v_texCoord.x * u_vecA + v_texCoord.y * u_vecB);"+
+                    "c = u_cp - u_vecA - u_vecB + (2.0 * (v_texCoord.x * u_vecA + v_texCoord.y * u_vecB));"+
 
                     "  int i;" +
                     "  z = c;" +
                     "  for(i = 0; i < u_iter; i++) {" +
-                    "    if((z.x * z.x + z.y * z.y) > 4.0) break;" +
-                    "    float x = (z.x * z.x - z.y * z.y) + c.x;" +
-                    "    float y = (z.y * z.x + z.x * z.y) + c.y;" +
-                    "    z.x = x;" +
-                    "    z.y = y;" +
+                    "    if((z.xz.x + z.yz.y) > 4.0) break;" +
+                    "    z = (vec2(z.x * z.x - z.y * z.y, 2.0 * z.y * z.x) + c);" +
                     "  }" +
 
-                    "  texCoord.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
-                    "  texCoord.y = 0.0;"+
-                    "  gl_FragColor = texture2D(u_texture, texCoord);" +
+                    "  textureIndex.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
+                    "  textureIndex.y = 0.0;"+
+                    "  gl_FragColor = texture2D(u_texture, textureIndex);" +
                     "}";
 
+    static final String EMULATED_FRAGMENT_SHADER_CODE =
+            "precision mediump float;" +
+                    "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
+                    "varying vec4 v_texCoord;" +     // vertex coord, proportion
+                    "uniform vec4 u_cp;" +
+                    "uniform vec4 u_vecA;"+
+                    "uniform vec4 u_vecB;"+
+                    "uniform int u_iter;" +            // escape limit
+
+                    "void main() {" +
+                    "  vec4 z, c;" +
+                    "  vec2 textureIndex;" +
+
+                    // start point
+                    //"c = u_cp - u_vecA - u_vecB + (2.0 * (v_texCoord.x * u_vecA + v_texCoord.y * u_vecB));"+
+                    "c.xy = ds_add(ds_add(ds_add(u_cp.xy, -u_vecA.xy), -u_vecB.xy), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.xy), ds_mull(ds_set(v_texCoord.y), u_vecB.xy))))" +
+                    "c.zw = ds_add(ds_add(ds_add(u_cp.zw, -u_vecA.zw), -u_vecB.zw), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.zw), ds_mull(ds_set(v_texCoord.y), u_vecB.zw))))" +
+                    "  int i;" +
+                    "  z = c;" +
+                    "  for(i = 0; i < u_iter; i++) {" +
+                    "    if((z.xz.x + z.yz.y) > 4.0) break;" +
+                    "    z = (vec2(z.x * z.x - z.y * z.y, 2.0 * z.y * z.x) + c);" +
+                    "  }" +
+
+                    "  textureIndex.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
+                    "  textureIndex.y = 0.0;"+
+                    "  gl_FragColor = texture2D(u_texture, textureIndex);" +
+                    "}" +
+
+                    "vec2 ds_set(float a)" +
+                    "    {" +
+                    "    vec2 z;" +
+                    "    z.x = a;" +
+                    "    z.y = 0.0;" +
+                    "    return z;" +
+                    "    }" +
+
+                    "vec2 ds_add(vec2 dsA, vec2 dsB) {" +
+                    "  vec2 dsC;"+
+                    "  float t1, t2, e;" +
+
+                    "  t1 = dsA.x + dsB.x;" +
+                    "  e = t1 - dsA.x" +
+                    "  t2 = ((dsB.x - e) + (dsA.x - (t1 - e))) + dsA.y + dsB.y;" +
+
+                    "  dsC.x = t1 + t2;" +
+                    "  dsC.y = t2 - (dsC.x - t1);" +
+                    "  return dsC;" +
+                    "  }" +
+
+                    "vec2 ds_mul(vec2 dsA, vec2 dsB) {" +
+                    "  vec2 dsC;" +
+                    "  float c11, c21, c2, e, t1, t2;" +
+                    "  float a1, a2, b1, b2, conA, conB, split = 8192.0;" +
+                    "  conA = dsA.x * split;" +
+                    "  conB = dsB.x * split;" +
+                    "  a1 = conA - (conA - dsA.x);" +
+                    "  b1 = conB - (conB - dsB.x);" +
+                    "  a2 = dsA.x - a1;" +
+                    "  b2 = dsB.x - b1;" +
+
+                    "  c11 = dsA.x * dsB.x;" +
+                    "  c21 = a2 * b2 + (a2 * b1 + (a1 * b2 + (a1 * b1 - c11)));" +
+
+                    "  c2 = dsA.x * dsB.y + dsA.y * dsB.x;" +
+
+                    "  t1 = c11 + c2;" +
+                    "  e = t1 - c11;" +
+                    "  t2 = dsA.y * dsB.y + ((c2 - e) + (c11 - (t1 - e))) + c21;" +
+
+                    "  dsC.x = t1 + t2;" +
+                    "  dsC.y = t2 - (dsC.x - t1);" +
+
+                    "  return dsC;" +
+                    "}";
+            ;
 
     /**
      * Model/view matrix for this object.  Updated by setPosition() and setScale().  This
@@ -291,7 +365,8 @@ public class TexturedMandelbrot {
         return this;
     }
 
-        public void setTexture(ByteBuffer buf, int width, int height, int format) {
+
+    public void setTexture(ByteBuffer buf, int width, int height, int format) {
         mTextureDataHandle = Util.createImageTexture(buf, width, height, format);
         mTextureWidth = width;
         mTextureHeight = height;
@@ -418,6 +493,7 @@ public class TexturedMandelbrot {
     /**
      * Draws the textured rect.
      */
+    // todo this is the draw for float precision
     public void draw() {
 //        if (GameSurfaceRenderer.EXTRA_CHECK) Util.checkGlError("draw start");
         if (!sDrawPrepared) {
