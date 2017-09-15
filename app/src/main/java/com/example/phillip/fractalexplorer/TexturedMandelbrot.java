@@ -50,7 +50,7 @@ public class TexturedMandelbrot {
                     "  int i;" +
                     "  z = c;" +
                     "  for(i = 0; i < u_iter; i++) {" +
-                    "    if((z.xz.x + z.yz.y) > 4.0) break;" +
+                    "    if((z.x * z.x + z.y * z.y) > 4.0) break;" +
                     "    z = (vec2(z.x * z.x - z.y * z.y, 2.0 * z.y * z.x) + c);" +
                     "  }" +
 
@@ -62,37 +62,57 @@ public class TexturedMandelbrot {
     static final String EMULATED_DOUBLE_FRAGMENT_SHADER_CODE =
             "precision mediump float;" +
                     "uniform sampler2D u_texture;" + // interpolated gradient in 1 high 2D texture
-                    "varying vec4 v_texCoord;" +     // vertex coord, proportion
+                    "varying vec2 v_texCoord;" +     // vertex coord, proportion
                     "uniform vec4 u_cp;" +
                     "uniform vec4 u_vecA;"+
                     "uniform vec4 u_vecB;"+
                     "uniform int u_iter;" +            // escape limit
 
-                    "void main();" +
-                    "boolean ds_greater_than(in vec2, in vec2);" +
+                    "bool ds_greater_than(vec2 dsA, vec2 dsB);" +
+                    "vec2 ds_set(float a);" +
+                    "vec2 ds_add(vec2 dsA, vec2 dsB);" +
+                    "vec2 ds_mul(vec2 dsA, vec2 dsB);" +
 
-                    "boolean ds_greater_than(in vec2 dsA, in vec2 dsB) {" +
-                    "  if(dsA.x != dsB.x) {" +
-                    "    return dsA.x > dsB.x;" +
-                    "  } else {" +
+                    "void main() {" +
+                    "  vec4 z, c;" +
+                    "  vec2 textureIndex;" +
+
+                    "  c.xy = ds_add(ds_add(ds_add(u_cp.xy, -u_vecA.xy), -u_vecB.xy), ds_mul(ds_set(2.0), ds_add(ds_mul(ds_set(v_texCoord.x), u_vecA.xy), ds_mul(ds_set(v_texCoord.y), u_vecB.xy))));" +
+                    "  c.zw = ds_add(ds_add(ds_add(u_cp.zw, -u_vecA.zw), -u_vecB.zw), ds_mul(ds_set(2.0), ds_add(ds_mul(ds_set(v_texCoord.x), u_vecA.zw), ds_mul(ds_set(v_texCoord.y), u_vecB.zw))));" +
+                    "  int i = 1;" +
+                    "  z = c;" +
+                    "  for(i = 0; i < u_iter; i++) {" +
+                    "    if(ds_greater_than(ds_add(ds_mul(z.xy, z.xy), ds_mul(z.zw, z.zw)), ds_set(4.0))) break;" +
+                    "    z = vec4(ds_add(ds_mul(z.xy, z.xy), -ds_mul(z.zw, z.zw))," +
+                    "             ds_mul(ds_mul(ds_set(2.0), z.xy), z.zw)) " +
+                    "        + c;" +
+                    "  }" +
+
+                    "  textureIndex.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
+                    "  textureIndex.y = 0.0;"+
+                    "  gl_FragColor = texture2D(u_texture, textureIndex);" +
+                    "}" +
+
+                    "bool ds_greater_than(vec2 dsA, vec2 dsB) {" +
+                    "  if(dsA.x == dsB.x) {" +
                     "    return dsA.y > dsB.y;" +
+                    "  } else {" +
+                    "    return dsA.x > dsB.x;" +
                     "  }" +
                     "}" +
 
                     "vec2 ds_set(float a) {" +
                     "  vec2 new;" +
-
-                    "  new.x = a;" +
-                    "  new.y = 0.0;" +
+                    "  new = vec2(a, 0.0);" +
                     "  return new;" +
                     "  }" +
 
                     "vec2 ds_add(vec2 dsA, vec2 dsB) {" +
-                    "  vec2 dsC;"+
+                    "  vec2 dsC;" +
                     "  float t1, t2, e;" +
 
                     "  t1 = dsA.x + dsB.x;" +
-                    "  e = t1 - dsA.x" +
+                    "  e = t1 - dsA.x;" +
                     "  t2 = ((dsB.x - e) + (dsA.x - (t1 - e))) + dsA.y + dsB.y;" +
 
                     "  dsC.x = t1 + t2;" +
@@ -124,29 +144,7 @@ public class TexturedMandelbrot {
                     "  dsC.y = t2 - (dsC.x - t1);" +
 
                     "  return dsC;" +
-                    "}" +
-
-                    "void main() {" +
-                    "  vec4 z, c;" +
-                    "  vec2 textureIndex;" +
-
-                    // start point
-                    "c.xy = ds_add(ds_add(ds_add(u_cp.xy, -u_vecA.xy), -u_vecB.xy), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.xy), ds_mull(ds_set(v_texCoord.y), u_vecB.xy))))" +
-                    "c.zw = ds_add(ds_add(ds_add(u_cp.zw, -u_vecA.zw), -u_vecB.zw), ds_mul(ds_set(2.0), ds_add(ds_mull(ds_set(v_texCoord.x), u_vecA.zw), ds_mull(ds_set(v_texCoord.y), u_vecB.zw))))" +
-                    "  int i;" +
-                    "  z = c;" +
-                    "  for(i = 0; i < u_iter; i++) {" +
-                    "    if(ds_greater_than(ds_add(ds_mul(z.xy, z.xy), ds_mul(z.zw, z.zw)), ds_set(4.0)) break;" +
-                    "    z = vec4(ds_add(ds_mul(z.xy, z.xy), -ds_mul(z.zw, z.zw)), ds_mul(ds_mul(ds_set(2.0), z.xy), z.zw)) + c;" +
-                    "  }" +
-
-                    "  textureIndex.x = i == u_iter ? 1.0 - 1.0 / float(u_iter) : float(i) / float(u_iter);"+
-                    "  textureIndex.y = 0.0;"+
-                    "  gl_FragColor = texture2D(u_texture, textureIndex);" +
                     "}";
-
-;
-            ;
 
     static String[] FRAGMENT_SHADER_LIST = new String[] {
             F32_FRAGMENT_SHADER_CODE,
